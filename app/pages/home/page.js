@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAccount, useConnect } from 'wagmi';
-
+import ImageGenerator from '@/app/components/ImageGenerator';
 export default function Feed() {
   const [searchQuery, setSearchQuery] = useState('');
   const [comics, setComics] = useState([]);
@@ -84,6 +84,18 @@ export default function Feed() {
             </svg>
             Create New
           </button>
+        </div>
+      </div>
+
+      {/* Image Generator */}
+      <div className="mb-6">
+        <div className="bg-white rounded-md border border-[#d0d7de] p-6">
+          <h2 className="text-xl font-semibold text-[#24292f] mb-4">Generate Comic Art</h2>
+          <ImageGenerator 
+            onImageSelected={(imageUrl) => {
+              // Handle generated image if needed
+            }}
+          />
         </div>
       </div>
 
