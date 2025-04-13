@@ -1,0 +1,1106 @@
+{
+  "abi": [
+    {
+      "type": "constructor",
+      "stateMutability": "undefined",
+      "payable": false,
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ERC721IncorrectOwner",
+      "inputs": [
+        {
+          "type": "address",
+          "name": "sender"
+        },
+        {
+          "type": "uint256",
+          "name": "tokenId"
+        },
+        {
+          "type": "address",
+          "name": "owner"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ERC721InsufficientApproval",
+      "inputs": [
+        {
+          "type": "address",
+          "name": "operator"
+        },
+        {
+          "type": "uint256",
+          "name": "tokenId"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ERC721InvalidApprover",
+      "inputs": [
+        {
+          "type": "address",
+          "name": "approver"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ERC721InvalidOperator",
+      "inputs": [
+        {
+          "type": "address",
+          "name": "operator"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ERC721InvalidOwner",
+      "inputs": [
+        {
+          "type": "address",
+          "name": "owner"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ERC721InvalidReceiver",
+      "inputs": [
+        {
+          "type": "address",
+          "name": "receiver"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ERC721InvalidSender",
+      "inputs": [
+        {
+          "type": "address",
+          "name": "sender"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ERC721NonexistentToken",
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "tokenId"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "OwnableInvalidOwner",
+      "inputs": [
+        {
+          "type": "address",
+          "name": "owner"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "OwnableUnauthorizedAccount",
+      "inputs": [
+        {
+          "type": "address",
+          "name": "account"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "anonymous": false,
+      "name": "Approval",
+      "inputs": [
+        {
+          "type": "address",
+          "name": "owner",
+          "indexed": true
+        },
+        {
+          "type": "address",
+          "name": "approved",
+          "indexed": true
+        },
+        {
+          "type": "uint256",
+          "name": "tokenId",
+          "indexed": true
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "anonymous": false,
+      "name": "ApprovalForAll",
+      "inputs": [
+        {
+          "type": "address",
+          "name": "owner",
+          "indexed": true
+        },
+        {
+          "type": "address",
+          "name": "operator",
+          "indexed": true
+        },
+        {
+          "type": "bool",
+          "name": "approved",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "anonymous": false,
+      "name": "BatchMetadataUpdate",
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "_fromTokenId",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "_toTokenId",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "anonymous": false,
+      "name": "CharacterAdded",
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "comicId",
+          "indexed": true
+        },
+        {
+          "type": "string",
+          "name": "name",
+          "indexed": false
+        },
+        {
+          "type": "string",
+          "name": "imageUrl",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "anonymous": false,
+      "name": "CharacterCreated",
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "comicId",
+          "indexed": true
+        },
+        {
+          "type": "uint256",
+          "name": "characterId",
+          "indexed": true
+        },
+        {
+          "type": "address",
+          "name": "creator",
+          "indexed": false
+        },
+        {
+          "type": "string",
+          "name": "name",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "anonymous": false,
+      "name": "ComicCreated",
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "comicId",
+          "indexed": true
+        },
+        {
+          "type": "address",
+          "name": "creator",
+          "indexed": true
+        },
+        {
+          "type": "string",
+          "name": "title",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "anonymous": false,
+      "name": "CopyMinted",
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "comicId",
+          "indexed": true
+        },
+        {
+          "type": "uint256",
+          "name": "tokenId",
+          "indexed": true
+        },
+        {
+          "type": "address",
+          "name": "minter",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "anonymous": false,
+      "name": "CoverImageUpdated",
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "comicId",
+          "indexed": true
+        },
+        {
+          "type": "string",
+          "name": "coverImage",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "anonymous": false,
+      "name": "MetadataUpdate",
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "_tokenId",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "anonymous": false,
+      "name": "OwnershipTransferred",
+      "inputs": [
+        {
+          "type": "address",
+          "name": "previousOwner",
+          "indexed": true
+        },
+        {
+          "type": "address",
+          "name": "newOwner",
+          "indexed": true
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "anonymous": false,
+      "name": "PromptPaid",
+      "inputs": [
+        {
+          "type": "address",
+          "name": "user",
+          "indexed": true
+        },
+        {
+          "type": "uint256",
+          "name": "amount",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "anonymous": false,
+      "name": "Transfer",
+      "inputs": [
+        {
+          "type": "address",
+          "name": "from",
+          "indexed": true
+        },
+        {
+          "type": "address",
+          "name": "to",
+          "indexed": true
+        },
+        {
+          "type": "uint256",
+          "name": "tokenId",
+          "indexed": true
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "INITIAL_CHARACTER_PRICE",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [],
+      "outputs": [
+        {
+          "type": "uint256",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "MAX_COPIES",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [],
+      "outputs": [
+        {
+          "type": "uint256",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "MINT_PRICE",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [],
+      "outputs": [
+        {
+          "type": "uint256",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "PROMPT_PRICE",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [],
+      "outputs": [
+        {
+          "type": "uint256",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "approve",
+      "constant": false,
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "to"
+        },
+        {
+          "type": "uint256",
+          "name": "tokenId"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "balanceOf",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "owner"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "uint256",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "characters",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": ""
+        },
+        {
+          "type": "uint256",
+          "name": ""
+        }
+      ],
+      "outputs": [
+        {
+          "type": "string",
+          "name": "name"
+        },
+        {
+          "type": "string",
+          "name": "description"
+        },
+        {
+          "type": "string",
+          "name": "prompt"
+        },
+        {
+          "type": "string",
+          "name": "imageUrl"
+        },
+        {
+          "type": "address",
+          "name": "creator"
+        },
+        {
+          "type": "uint256",
+          "name": "timestamp"
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "comics",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": ""
+        }
+      ],
+      "outputs": [
+        {
+          "type": "string",
+          "name": "title"
+        },
+        {
+          "type": "string",
+          "name": "description"
+        },
+        {
+          "type": "string",
+          "name": "coverImage"
+        },
+        {
+          "type": "uint256",
+          "name": "price"
+        },
+        {
+          "type": "bool",
+          "name": "isPublished"
+        },
+        {
+          "type": "address",
+          "name": "creator"
+        },
+        {
+          "type": "uint256",
+          "name": "createdAt"
+        },
+        {
+          "type": "uint256",
+          "name": "copiesMinted"
+        },
+        {
+          "type": "string",
+          "name": "baseUri"
+        },
+        {
+          "type": "uint256",
+          "name": "characterCount"
+        },
+        {
+          "type": "uint256",
+          "name": "nextCharacterPrice"
+        },
+        {
+          "type": "string",
+          "name": "artisticStyle"
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "createCharacter",
+      "constant": false,
+      "stateMutability": "payable",
+      "payable": true,
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "comicId"
+        },
+        {
+          "type": "string",
+          "name": "name"
+        },
+        {
+          "type": "string",
+          "name": "description"
+        },
+        {
+          "type": "string",
+          "name": "prompt"
+        },
+        {
+          "type": "string",
+          "name": "imageUrl"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "uint256",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "createComic",
+      "constant": false,
+      "payable": false,
+      "inputs": [
+        {
+          "type": "string",
+          "name": "title"
+        },
+        {
+          "type": "string",
+          "name": "description"
+        },
+        {
+          "type": "string",
+          "name": "artisticStyle"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "uint256",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "createCoverImage",
+      "constant": false,
+      "payable": false,
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "comicId"
+        },
+        {
+          "type": "string",
+          "name": "imageUrl"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "creatorComics",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": ""
+        },
+        {
+          "type": "uint256",
+          "name": ""
+        }
+      ],
+      "outputs": [
+        {
+          "type": "uint256",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "getApproved",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "tokenId"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "address",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "getCharacters",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "comicId"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "tuple[]",
+          "name": "",
+          "components": [
+            {
+              "type": "string",
+              "name": "name"
+            },
+            {
+              "type": "string",
+              "name": "description"
+            },
+            {
+              "type": "string",
+              "name": "prompt"
+            },
+            {
+              "type": "string",
+              "name": "imageUrl"
+            },
+            {
+              "type": "address",
+              "name": "creator"
+            },
+            {
+              "type": "uint256",
+              "name": "timestamp"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "getComicDetails",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "comicId"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "string",
+          "name": "title"
+        },
+        {
+          "type": "string",
+          "name": "description"
+        },
+        {
+          "type": "string",
+          "name": "coverImage"
+        },
+        {
+          "type": "uint256",
+          "name": "price"
+        },
+        {
+          "type": "bool",
+          "name": "isPublished"
+        },
+        {
+          "type": "address",
+          "name": "creator"
+        },
+        {
+          "type": "uint256",
+          "name": "createdAt"
+        },
+        {
+          "type": "uint256",
+          "name": "copiesMinted"
+        },
+        {
+          "type": "string",
+          "name": "baseUri"
+        },
+        {
+          "type": "uint256",
+          "name": "characterCount"
+        },
+        {
+          "type": "uint256",
+          "name": "nextCharacterPrice"
+        },
+        {
+          "type": "string",
+          "name": "artisticStyle"
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "getCreatorComics",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "creator"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "uint256[]",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "hasPaidForPrompt",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": ""
+        },
+        {
+          "type": "address",
+          "name": ""
+        }
+      ],
+      "outputs": [
+        {
+          "type": "bool",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "isApprovedForAll",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "owner"
+        },
+        {
+          "type": "address",
+          "name": "operator"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "bool",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "mintCopy",
+      "constant": false,
+      "stateMutability": "payable",
+      "payable": true,
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "comicId"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "name",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [],
+      "outputs": [
+        {
+          "type": "string",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "owner",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [],
+      "outputs": [
+        {
+          "type": "address",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "ownerOf",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "tokenId"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "address",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "payForPrompt",
+      "constant": false,
+      "stateMutability": "payable",
+      "payable": true,
+      "inputs": [],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "renounceOwnership",
+      "constant": false,
+      "payable": false,
+      "inputs": [],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "safeTransferFrom",
+      "constant": false,
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "from"
+        },
+        {
+          "type": "address",
+          "name": "to"
+        },
+        {
+          "type": "uint256",
+          "name": "tokenId"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "safeTransferFrom",
+      "constant": false,
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "from"
+        },
+        {
+          "type": "address",
+          "name": "to"
+        },
+        {
+          "type": "uint256",
+          "name": "tokenId"
+        },
+        {
+          "type": "bytes",
+          "name": "data"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "setApprovalForAll",
+      "constant": false,
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "operator"
+        },
+        {
+          "type": "bool",
+          "name": "approved"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "supportsInterface",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [
+        {
+          "type": "bytes4",
+          "name": "interfaceId"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "bool",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "symbol",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [],
+      "outputs": [
+        {
+          "type": "string",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "tokenToComic",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": ""
+        }
+      ],
+      "outputs": [
+        {
+          "type": "uint256",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "tokenURI",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "tokenId"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "string",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "transferFrom",
+      "constant": false,
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "from"
+        },
+        {
+          "type": "address",
+          "name": "to"
+        },
+        {
+          "type": "uint256",
+          "name": "tokenId"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "transferOwnership",
+      "constant": false,
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "newOwner"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "withdraw",
+      "constant": false,
+      "payable": false,
+      "inputs": [],
+      "outputs": []
+    }
+  ]
+}
