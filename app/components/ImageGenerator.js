@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { ethers } from 'ethers';
 import { CONTRACT_ADDRESS, CONTRACT_ABI, IMAGE_GENERATION_PRICE } from '@/app/constants/contract';
 
-export default function ImageGenerator({ onImageSelected, currentImage }) {
+export default function ImageGenerator({ onImageSelected, currentImage, artisticStyle }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [generatedImage, setGeneratedImage] = useState(null);
@@ -14,6 +14,11 @@ export default function ImageGenerator({ onImageSelected, currentImage }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedImage, setSelectedImage] = useState(currentImage || null);
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearch, setShowSearch] = useState(false);
+  const [selectedCharacters, setSelectedCharacters] = useState([]);
+  const [selectedProps, setSelectedProps] = useState([]);
+  const [searchType, setSearchType] = useState(null); // 'character' or 'prop'
   const { address } = useAccount();
 
   // Contract write hook for payment
@@ -25,6 +30,63 @@ export default function ImageGenerator({ onImageSelected, currentImage }) {
   const { data: receipt, isLoading: isTransactionPending } = useWaitForTransactionReceipt({
     hash,
   });
+
+  // Handle character/prop search
+  const handlePromptChange = async (e) => {
+    const value = e.target.value;
+    setPrompt(value);
+
+    // Check for @ or # mention
+    const lastWord = value.split(' ').pop();
+    if (lastWord.startsWith('@')) {
+      const searchTerm = lastWord.substring(1);
+      if (searchTerm.length > 0) {
+        try {
+          const response = await axios.get(`/api/characters?search=${searchTerm}`);
+          setSearchResults(response.data);
+          setShowSearch(true);
+          setSearchType('character');
+        } catch (error) {
+          console.error('Error searching characters:', error);
+        }
+      }
+    } else if (lastWord.startsWith('#')) {
+      const searchTerm = lastWord.substring(1);
+      if (searchTerm.length > 0) {
+        try {
+          const response = await axios.get(`/api/props?search=${searchTerm}`);
+          setSearchResults(response.data);
+          setShowSearch(true);
+          setSearchType('prop');
+        } catch (error) {
+          console.error('Error searching props:', error);
+        }
+      }
+    } else {
+      setShowSearch(false);
+      setSearchType(null);
+    }
+  };
+
+  // Handle character/prop selection
+  const handleItemSelect = (item) => {
+    const words = prompt.split(' ');
+    words[words.length - 1] = item.name.replace(/_/g, ' ');
+    setPrompt(words.join(' '));
+    setShowSearch(false);
+    
+    if (searchType === 'character') {
+      // Add character to selected list if not already there
+      if (!selectedCharacters.find(c => c._id === item._id)) {
+        setSelectedCharacters([...selectedCharacters, item]);
+      }
+    } else if (searchType === 'prop') {
+      // Add prop to selected list if not already there
+      if (!selectedProps.find(p => p._id === item._id)) {
+        setSelectedProps([...selectedProps, item]);
+      }
+    }
+  };
 
   const generateImage = async () => {
     try {
@@ -45,15 +107,12 @@ export default function ImageGenerator({ onImageSelected, currentImage }) {
         value,
       });
 
-      // Wait for the transaction to be confirmed
-      if (!receipt) {
-        setError('Waiting for payment confirmation...');
-        return;
-      }
-
       // After payment is confirmed, generate the image
       const response = await axios.post('/api/generate-image', {
-        prompt,
+        prompt: prompt + ".\n\nbe sure to use the artistic style : "+artisticStyle,
+        characters: selectedCharacters,
+        props: selectedProps,
+        artisticStyle,
       });
 
       setGeneratedImage(response.data.image);
@@ -72,6 +131,11 @@ export default function ImageGenerator({ onImageSelected, currentImage }) {
     try {
       setIsLoading(true);
       setError('');
+
+      // Clear selected items
+      setSelectedCharacters([]);
+      setSelectedProps([]);
+      setPrompt('');
 
       // Convert base64 to blob
       const response = await fetch(generatedImage);
@@ -156,13 +220,72 @@ export default function ImageGenerator({ onImageSelected, currentImage }) {
             )}
 
             <div className="space-y-4">
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Describe the image you want to generate..."
-                className="w-full h-32 p-3 border rounded-md"
-                rows={4}
-              />
+              <div className="relative">
+                <textarea
+                  value={prompt}
+                  onChange={handlePromptChange}
+                  placeholder="Describe the image you want to generate... Use @ for characters and # for props"
+                  className="w-full h-32 p-3 border rounded-md"
+                  rows={4}
+                />
+                {showSearch && searchResults.length > 0 && (
+                  <div className="absolute left-0 right-0 mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                    {searchResults.map((item) => (
+                      <div
+                        key={item._id}
+                        onClick={() => handleItemSelect(item)}
+                        className="p-2 hover:bg-gray-100 cursor-pointer flex items-center space-x-2"
+                      >
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                        <span>{item.name.replace(/_/g, ' ')}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {(selectedCharacters.length > 0 || selectedProps.length > 0) && (
+                <div className="space-y-2">
+                  {selectedCharacters.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedCharacters.map((character) => (
+                        <div
+                          key={character._id}
+                          className="flex items-center space-x-1 bg-blue-100 px-2 py-1 rounded-full"
+                        >
+                          <img
+                            src={character.image}
+                            alt={character.name}
+                            className="w-4 h-4 rounded-full object-cover"
+                          />
+                          <span className="text-sm">{character.name.replace(/_/g, ' ')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {selectedProps.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedProps.map((prop) => (
+                        <div
+                          key={prop._id}
+                          className="flex items-center space-x-1 bg-green-100 px-2 py-1 rounded-full"
+                        >
+                          <img
+                            src={prop.image}
+                            alt={prop.name}
+                            className="w-4 h-4 rounded-full object-cover"
+                          />
+                          <span className="text-sm">{prop.name.replace(/_/g, ' ')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="flex gap-4">
                 <button

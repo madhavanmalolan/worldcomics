@@ -1,101 +1,235 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import ImageGenerator from '@/app/components/ImageGenerator';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
+import { parseEther } from 'viem';
+import contracts from '@/app/constants/contracts.json';
+import { admin } from '@/app/constants/addresses.json';
+import axios from 'axios';
+import { ethers } from 'ethers';
 import { useRouter } from 'next/navigation';
-import { useAccount, useChainId } from 'wagmi';
-import { baseSepolia } from 'wagmi/chains';
-import Step1ComicDetails from '@/app/components/create/Step1ComicDetails';
-import Step2Characters from '@/app/components/create/Step2Characters';
-import Step3CoverImage from '@/app/components/create/Step3CoverImage';
 
-export default function CreatePage() {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [comicId, setComicId] = useState(null);
-  const { address } = useAccount();
-  const chainId = useChainId();
+export default function CreateComicPage() {
+  const [comicName, setComicName] = useState('');
+  const [comicImage, setComicImage] = useState('');
+  const [artisticStyle, setArtisticStyle] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const [txHash, setTxHash] = useState('');
+  const [comicData, setComicData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { address, isConnected } = useAccount();
+  const publicClient = usePublicClient();
   const router = useRouter();
 
-  const handleStep1Complete = () => {
-    setCurrentStep(2);
+  // Get Comics contract address from Admin
+  const adminAddress = admin;
+
+  const { data: comicsAddress, isLoading: isLoadingAddress, error: addressError } = useReadContract({
+    address: adminAddress,
+    abi: contracts.admin.abi,
+    functionName: 'getComicsAddress',
+  });
+
+  // Get the current mint price
+  const { data: mintPrice, isLoading: isLoadingPrice, error: priceError } = useReadContract({
+    address: comicsAddress,
+    abi: contracts.comics.abi,
+    functionName: 'getComicCreationFee',
+    query: {
+      enabled: !!comicsAddress,
+    }
+  });
+
+  // Prepare the mint comic transaction
+  const { writeContractAsync: mintComic, data: mintData } = useWriteContract();
+
+  // Wait for transaction confirmation
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash: mintData?.hash,
+  });
+
+
+  const handleNameChange = (e) => {
+    const value = e.target.value;
+    const formattedName = value
+      .toLowerCase()
+      .replace(/[^a-z\s]/g, '')
+      .replace(/\s+/g, '_');
+    setComicName(formattedName);
   };
 
-  const handleStep2Complete = () => {
-    setCurrentStep(3);
-  };
+  const handleCreateComic = async () => {
+    if (!comicName || !comicImage) {
+      alert('Please provide both a name and an image for the comic');
+      return;
+    }
 
-  const handleStep3Complete = () => {
+    if (!isConnected) {
+      alert('Please connect your wallet to create a comic');
+      return;
+    }
 
-    router.push('/');
+    if (!comicsAddress) {
+      alert('Could not get Comics contract address');
+      return;
+    }
+
+    if (mintPrice === undefined) {
+      alert('Could not get mint price');
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const tx = await mintComic({
+        address: comicsAddress,
+        abi: contracts.comics.abi,
+        functionName: 'createComic',
+        args: [comicName, comicImage],
+        value: mintPrice,
+      });
+
+      console.log('Transaction:', tx);
+      setTxHash(tx);
+
+      // Wait for transaction receipt
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: tx });
+      console.log('Transaction receipt:', receipt);
+      
+      // Get the comic ID from the event logs
+      const iface = new ethers.Interface(contracts.comics.abi);
+      const comicCreatedEvent = receipt.logs.find(log => 
+        log.topics[0] === iface.getEvent('ComicCreated').topicHash
+      );
+      
+      if (!comicCreatedEvent) {
+        throw new Error('ComicCreated event not found in transaction logs');
+      }
+
+      const comicId = BigInt(comicCreatedEvent.topics[1]);
+      console.log('Comic ID:', comicId);
+
+      // Call the API route to save the comic
+      const response = await axios.post('/api/comics', {
+        txHash: tx,
+        comicId: comicId.toString(),
+        name: comicName,
+        image: comicImage,
+        artisticStyle: artisticStyle,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('API Response:', response.data);
+      
+      // Reset form
+      setComicName('');
+      setComicImage('');
+      setArtisticStyle('');
+    } catch (error) {
+      console.error('Error creating comic:', error);
+      alert('Failed to create comic. Please try again.');
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#f6f8fa] p-6">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-lg border border-[#d0d7de] p-6">
-          <h1 className="text-2xl font-semibold text-[#24292f] mb-6">Create a new comic</h1>
+    <div className="min-h-screen bg-gray-100 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white shadow rounded-lg p-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            {comicData ? 'Edit Comic' : 'Create a New Comic'}
+          </h2>
           
-          {!address && (
-            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+          {isLoading && (
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-sm text-blue-800">Loading comic data...</p>
+            </div>
+          )}
+
+          {!isConnected && (
+            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
               <p className="text-sm text-yellow-800">
                 Please connect your wallet to create a comic.
               </p>
             </div>
           )}
-          
-          {chainId !== baseSepolia.id && (
-            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-              <p className="text-sm text-yellow-800">
-                Please connect to the Base Sepolia network to create a comic.
+
+          {txHash && (
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-sm text-blue-800">
+                Transaction sent! Hash: {txHash}
+                {isConfirming && ' (Confirming...)'}
+                {isConfirmed && ' (Confirmed!)'}
               </p>
             </div>
           )}
 
-          <div className="mb-8">
-            <div className="flex items-center justify-between">
-              <div className={`flex items-center ${currentStep >= 1 ? 'text-[#0969da]' : 'text-[#57606a]'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 1 ? 'bg-[#0969da] text-white' : 'bg-[#f6f8fa] border border-[#d0d7de]'}`}>
-                  1
-                </div>
-                <span className="ml-2">Comic Details</span>
-              </div>
-              <div className={`flex-1 h-1 mx-4 ${currentStep >= 2 ? 'bg-[#0969da]' : 'bg-[#f6f8fa] border border-[#d0d7de]'}`}></div>
-              <div className={`flex items-center ${currentStep >= 2 ? 'text-[#0969da]' : 'text-[#57606a]'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 2 ? 'bg-[#0969da] text-white' : 'bg-[#f6f8fa] border border-[#d0d7de]'}`}>
-                  2
-                </div>
-                <span className="ml-2">Characters</span>
-              </div>
-              <div className={`flex-1 h-1 mx-4 ${currentStep >= 3 ? 'bg-[#0969da]' : 'bg-[#f6f8fa] border border-[#d0d7de]'}`}></div>
-              <div className={`flex items-center ${currentStep >= 3 ? 'text-[#0969da]' : 'text-[#57606a]'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 3 ? 'bg-[#0969da] text-white' : 'bg-[#f6f8fa] border border-[#d0d7de]'}`}>
-                  3
-                </div>
-                <span className="ml-2">Cover Image</span>
-              </div>
+          <div className="space-y-6">
+            {/* Name Input */}
+            <div>
+              <label htmlFor="comicName" className="block text-sm font-medium text-gray-700 mb-1">
+                Comic Name
+              </label>
+              <input
+                type="text"
+                id="comicName"
+                value={comicName}
+                onChange={handleNameChange}
+                placeholder="Enter comic name"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                Name will be converted to lowercase with underscores (e.g., "super_hero_adventures")
+              </p>
             </div>
+
+            {/* Artistic Style Input */}
+            <div>
+              <label htmlFor="artisticStyle" className="block text-sm font-medium text-gray-700 mb-1">
+                Artistic Style
+              </label>
+              <input
+                type="text"
+                id="artisticStyle"
+                value={artisticStyle}
+                onChange={(e) => setArtisticStyle(e.target.value)}
+                placeholder="e.g., 'anime style', 'realistic', 'watercolor'"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                Describe the artistic style you want for your comic cover
+              </p>
+            </div>
+
+            {/* Image Generator */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Comic Cover Image
+              </label>
+              <ImageGenerator 
+                artisticStyle={artisticStyle}
+                onImageSelected={(imageUrl) => setComicImage(imageUrl)}
+              />
+            </div>
+
+            {/* Create Button */}
+            <button
+              onClick={handleCreateComic}
+              disabled={!comicName || !comicImage || !isConnected || isCreating || mintPrice === undefined}
+              className={`w-full px-4 py-2 text-white rounded-md ${
+                (!comicName || !comicImage || !isConnected || isCreating || mintPrice === undefined)
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              {isCreating ? 'Creating...' : 'Create Comic'}
+            </button>
           </div>
-
-          {currentStep === 1 && (
-            <Step1ComicDetails 
-              onNext={handleStep1Complete} 
-              comicId={comicId} 
-              setComicId={setComicId} 
-            />
-          )}
-
-          {currentStep === 2 && (
-            <Step2Characters 
-              comicId={comicId} 
-              onNext={handleStep2Complete} 
-            />
-          )}
-
-          {currentStep === 3 && (
-            <Step3CoverImage 
-              comicId={comicId} 
-              onNext={handleStep3Complete}
-            />
-          )}
         </div>
       </div>
     </div>

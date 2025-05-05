@@ -2,6 +2,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useSwipeable } from 'react-swipeable'; // You'll need to install this package
+import ComicCanvas from '@/app/components/ComicCanvas';
+import Link from 'next/link';
+import { useAccount, useReadContract, useWriteContract } from 'wagmi';
+import { ethers } from 'ethers';
+import contracts from '@/app/constants/contracts.json';
+import { admin } from '@/app/constants/addresses.json';
 
 export default function Feed() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -9,28 +15,99 @@ export default function Feed() {
   const [isLoading, setIsLoading] = useState(true);
   const [pages, setPages] = useState([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [candidates, setCandidates] = useState([]);
+  const [voteAmounts, setVoteAmounts] = useState({});
+  const [isVoting, setIsVoting] = useState({});
   const router = useRouter();
   const params = useParams();
   const comicId = params.id;
 
+  const { address, isConnected } = useAccount();
+  const { writeContractAsync } = useWriteContract();
+
+  // Get Comics contract address from Admin
+  const { data: comicsAddress } = useReadContract({
+    address: admin,
+    abi: contracts.admin.abi,
+    functionName: 'getComicsAddress',
+  });
+
+  // Get vote counts for all candidates
+  const { data: voteCounts } = useReadContract({
+    address: comicsAddress,
+    abi: contracts.comics.abi,
+    functionName: 'getVoteCount',
+    args: [candidates.map(c => c.stripId)],
+    enabled: candidates.length > 0,
+  });
+
   useEffect(() => {
     loadComicPages();
+    loadCandidates();
   }, []);
 
-  const loadComicPages = async (comicId) => {
+  // Initialize vote amounts when candidates change
+  useEffect(() => {
+    const initialAmounts = {};
+    candidates.forEach(candidate => {
+      initialAmounts[candidate.stripId] = '0.01';
+    });
+    setVoteAmounts(initialAmounts);
+  }, [candidates]);
+
+  const loadComicPages = async () => {
     setIsLoading(true);
-    try {
-      // Generate dummy pages data
-      const dummyPages = Array.from({ length: 10 }, (_, i) => ({
-        id: i + 1,
-        imageUrl: `https://source.unsplash.com/800x1200/?comic,manga,page${i}`,
-        pageNumber: i + 1
-      }));
-      setPages(dummyPages);
+    /*try {
+      const response = await fetch(`/api/comics/${comicId}/pages`);
+      if (!response.ok) {
+        throw new Error('Failed to load pages');
+      }
+      const data = await response.json();
+      setPages(data);
     } catch (error) {
       console.error('Error loading comic pages:', error);
     } finally {
       setIsLoading(false);
+    }*/
+    setIsLoading(false);
+  };
+
+  const loadCandidates = async () => {
+    try {
+      console.log("comicId", comicId);
+      const response = await fetch(`/api/comics/${comicId}/candidates`);
+      const data = await response.json();
+      console.log("data", data);
+      const candidates = data.filter(candidate => candidate.imageUrls && candidate.imageUrls.length > 0);
+      setCandidates(candidates);
+    } catch (error) {
+      console.error('Error loading candidates:', error);
+    }
+  };
+
+  const handleSavePage = async (pageData) => {
+    try {
+      const response = await fetch(`/api/comics/${comicId}/pages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageUrl: pageData.image,
+          pageNumber: pages.length + 1,
+          elements: pageData.elements
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save page');
+      }
+
+      // Reload pages after saving
+      await loadComicPages();
+      setCurrentPage(pages.length + 1);
+    } catch (error) {
+      console.error('Error saving page:', error);
     }
   };
   
@@ -59,190 +136,159 @@ export default function Feed() {
     router.push(path);
   };
 
-  // ... existing generateFeedItems and other functions ...
+  const handleVoteAmountChange = (stripId, value) => {
+    // Ensure value is a valid number and not negative
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue) && numValue >= 0) {
+      setVoteAmounts(prev => ({
+        ...prev,
+        [stripId]: value
+      }));
+    }
+  };
+
+  const adjustVoteAmount = (stripId, delta) => {
+    const currentAmount = parseFloat(voteAmounts[stripId] || '0');
+    const newAmount = Math.max(0, currentAmount + delta);
+    setVoteAmounts(prev => ({
+      ...prev,
+      [stripId]: newAmount.toFixed(2)
+    }));
+  };
+
+  const handleVote = async (stripId) => {
+    console.log("handleVote", stripId);
+    if (!isConnected) {
+      alert('Please connect your wallet to vote');
+      return;
+    }
+    if (!comicsAddress) {
+      alert('Could not get Comics contract address');
+      return;
+    }
+
+    setIsVoting(prev => ({ ...prev, [stripId]: true }));
+    try {
+      const amount = ethers.parseEther(voteAmounts[stripId]);
+      console.log("amount", amount, stripId);
+      const tx = await writeContractAsync({
+        address: comicsAddress,
+        abi: contracts.comics.abi,
+        functionName: 'vote',
+        args: [stripId],
+        value: amount,
+      });
+
+      console.log('Vote transaction:', tx);
+      // Reset vote amount after successful vote
+      setVoteAmounts(prev => ({
+        ...prev,
+        [stripId]: '0.01'
+      }));
+    } catch (error) {
+      console.error('Error voting:', error);
+      alert('Failed to vote. Please try again.');
+    } finally {
+      setIsVoting(prev => ({ ...prev, [stripId]: false }));
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#f6f8fa] p-6 flex items-center justify-center">
+        <div className="text-[#57606a]">Loading pages...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f6f8fa]">
-      {/* Header Bar */}
-      <div className="sticky top-0 z-20 bg-white border-b border-[#d0d7de] px-4 py-3">
-        <div className="max-w-[1280px] mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-4 text-[#24292f]">
-            <span className="font-semibold">Comic Viewer</span>
-            <span className="text-[#57606a]">•</span>
-            <span className="text-[#57606a]">Page {currentPage} of {pages.length}</span>
+      <div className="h-px bg-[#d0d7de] mt-3"></div>
+      <div className="max-w-[1280px] mx-auto pt-3">
+        <h2 className="text-lg font-medium text-gray-900">Candidates for tomorrow's strip</h2>
+        {isConnected ? (
+          <div className="mt-2 text-sm text-gray-600">
+            Connected wallet: {address}
           </div>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-4">
-            <button
-              onClick={() => handleNavigation(`/comics/${comicId}/characters`)}
-              className="flex items-center space-x-2 px-3 py-1.5 text-sm text-[#24292f] hover:bg-[#f6f8fa] rounded-md transition-colors"
-            >
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 110-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9zm10.5-1V9h-8c-.356 0-.694.074-1 .208V2.5a1 1 0 011-1h8zM5 12.25v3.25a.25.25 0 00.4.2l1.45-1.087a.25.25 0 01.3 0L8.6 15.7a.25.25 0 00.4-.2v-3.25a.25.25 0 00-.25-.25h-3.5a.25.25 0 00-.25.25z"/>
-              </svg>
-              <span>Characters</span>
-            </button>
-            <button
-              onClick={() => handleNavigation(`/comics/${comicId}/props`)}
-              className="flex items-center space-x-2 px-3 py-1.5 text-sm text-[#24292f] hover:bg-[#f6f8fa] rounded-md transition-colors"
-            >
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 110-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9zm10.5-1V9h-8c-.356 0-.694.074-1 .208V2.5a1 1 0 011-1h8zM5 12.25v3.25a.25.25 0 00.4.2l1.45-1.087a.25.25 0 01.3 0L8.6 15.7a.25.25 0 00.4-.2v-3.25a.25.25 0 00-.25-.25h-3.5a.25.25 0 00-.25.25z"/>
-              </svg>
-              <span>Props</span>
-            </button>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={toggleMenu}
-            className="md:hidden p-2 hover:bg-[#f6f8fa] rounded-md transition-colors"
-          >
-            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path fillRule="evenodd" d="M2.5 12a.5.5 0 01.5-.5h10a.5.5 0 010 1H3a.5.5 0 01-.5-.5zm0-4a.5.5 0 01.5-.5h10a.5.5 0 010 1H3a.5.5 0 01-.5-.5zm0-4a.5.5 0 01.5-.5h10a.5.5 0 010 1H3a.5.5 0 01-.5-.5z"/>
-            </svg>
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-[#d0d7de] p-2">
-            <button
-              onClick={() => handleNavigation(`/comics/${comicId}/characters`)}
-              className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-[#24292f] hover:bg-[#f6f8fa] rounded-md transition-colors"
-            >
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 110-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9zm10.5-1V9h-8c-.356 0-.694.074-1 .208V2.5a1 1 0 011-1h8zM5 12.25v3.25a.25.25 0 00.4.2l1.45-1.087a.25.25 0 01.3 0L8.6 15.7a.25.25 0 00.4-.2v-3.25a.25.25 0 00-.25-.25h-3.5a.25.25 0 00-.25.25z"/>
-              </svg>
-              <span>Characters</span>
-            </button>
-            <button
-              onClick={() => handleNavigation(`/comics/${comicId}/props`)}
-              className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-[#24292f] hover:bg-[#f6f8fa] rounded-md transition-colors"
-            >
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 110-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9zm10.5-1V9h-8c-.356 0-.694.074-1 .208V2.5a1 1 0 011-1h8zM5 12.25v3.25a.25.25 0 00.4.2l1.45-1.087a.25.25 0 01.3 0L8.6 15.7a.25.25 0 00.4-.2v-3.25a.25.25 0 00-.25-.25h-3.5a.25.25 0 00-.25.25z"/>
-              </svg>
-              <span>Props</span>
-            </button>
+        ) : (
+          <div className="mt-2 text-sm text-gray-600">
+            Connect your wallet to vote
           </div>
         )}
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-[1280px] mx-auto px-4 py-6">
-        <div className="bg-white border border-[#d0d7de] rounded-md">
-          <div className="relative flex items-center">
-            {/* Left Navigation Button */}
-            <div className="hidden md:block">
-              <button
-                onClick={() => navigatePage('prev')}
-                className={`text-[#24292f] p-2 rounded hover:bg-[#f6f8fa] transition-colors absolute left-4 top-1/2 -translate-y-1/2 z-10 ${
-                  currentPage <= 1 ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-                disabled={currentPage <= 1}
-              >
-                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                  <path fillRule="evenodd" d="M9.78 4.22a.75.75 0 010 1.06L7.06 8l2.72 2.72a.75.75 0 11-1.06 1.06L5.47 8.53a.75.75 0 010-1.06l3.25-3.25a.75.75 0 011.06 0z"/>
-                </svg>
-              </button>
-            </div>
-
-            {/* Image Container */}
-            <div 
-              className="relative w-full bg-white rounded-md overflow-hidden"
-              {...swipeHandlers}
-            >
-              {isLoading ? (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="h-8 w-8">
-                    <svg className="animate-spin" viewBox="0 0 16 16" fill="none">
-                      <circle
-                        className="opacity-25"
-                        cx="8"
-                        cy="8"
-                        r="7"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M15 8a7 7 0 00-7-7v2a5 5 0 015 5h2z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              ) : (
-                <div className="relative mx-auto" style={{ 
-                  width: 'min(80vh, 100%)',
-                  height: 'min(80vh, 100%)',
-                  maxWidth: '800px',
-                  maxHeight: '800px',
-                  aspectRatio: '1/1'
-                }}>
-                  <div className="absolute inset-0 flex items-center justify-center p-4">
-                    <img
-                      src={pages[currentPage - 1]?.imageUrl || ''}
-                      alt={`Page ${currentPage}`}
-                      className="max-w-full max-h-full object-contain"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Right Navigation Button */}
-            <div className="hidden md:block">
-              <button
-                onClick={() => navigatePage('next')}
-                className={`text-[#24292f] p-2 rounded hover:bg-[#f6f8fa] transition-colors absolute right-4 top-1/2 -translate-y-1/2 z-10 ${
-                  currentPage >= pages.length ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-                disabled={currentPage >= pages.length}
-              >
-                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                  <path fillRule="evenodd" d="M6.22 4.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06l-3.25 3.25a.75.75 0 01-1.06-1.06L8.94 8 6.22 5.28a.75.75 0 010-1.06z"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          {/* Bottom Navigation Bar */}
-          <div className="border-t border-[#d0d7de] px-4 py-3 flex items-center justify-between bg-[#f6f8fa]">
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setCurrentPage(1)}
-                className="px-3 py-1 text-sm border border-[#d0d7de] rounded-md bg-white hover:bg-[#f3f4f6] disabled:opacity-50"
-                disabled={currentPage === 1}
-              >
-                First
-              </button>
-              <button
-                onClick={() => navigatePage('prev')}
-                className="px-3 py-1 text-sm border border-[#d0d7de] rounded-md bg-white hover:bg-[#f3f4f6] disabled:opacity-50"
-                disabled={currentPage <= 1}
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => navigatePage('next')}
-                className="px-3 py-1 text-sm border border-[#d0d7de] rounded-md bg-white hover:bg-[#f3f4f6] disabled:opacity-50"
-                disabled={currentPage >= pages.length}
-              >
-                Next
-              </button>
-              <button
-                onClick={() => setCurrentPage(pages.length)}
-                className="px-3 py-1 text-sm border border-[#d0d7de] rounded-md bg-white hover:bg-[#f3f4f6] disabled:opacity-50"
-                disabled={currentPage === pages.length}
-              >
-                Last
-              </button>
-            </div>
-          </div>
+        <div className="mt-4">
+          <Link
+            href={`/pages/comics/${comicId}/create-strip`}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            Create Strip
+          </Link>
         </div>
+
+        {candidates && candidates.length > 0 ? (
+          <div className="mt-4 space-y-8">
+            {candidates.map((candidate, index) => (
+              <div key={index} className="bg-white p-4 rounded-lg shadow">
+                <div className={`grid grid-cols-${candidate.imageUrls.length} gap-4`}>
+                  {candidate.imageUrls.map((imageUrl, imgIndex) => (
+                    <div key={imgIndex} className="aspect-square">
+                      <img
+                        src={imageUrl}
+                        alt={`Strip ${index + 1} Panel ${imgIndex + 1}`}
+                        className="w-full h-full object-cover rounded-md"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 flex items-center justify-between">
+                  <div className="text-sm text-gray-500">
+                    Created {new Date(candidate.createdAt).toLocaleDateString()} ({candidate.stripId})
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => adjustVoteAmount(candidate.stripId, -0.01)}
+                        className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        value={voteAmounts[candidate.stripId] || '0.01'}
+                        onChange={(e) => handleVoteAmountChange(candidate.stripId, e.target.value)}
+                        min="0"
+                        step="0.01"
+                        className="w-20 px-2 py-1 border rounded text-right"
+                      />
+                      <button
+                        onClick={() => adjustVoteAmount(candidate.stripId, 0.01)}
+                        className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                      >
+                        +
+                      </button>
+                      <span className="text-sm text-gray-600">ETH</span>
+                    </div>
+                    <button
+                      onClick={() => handleVote(candidate.stripId)}
+                      disabled={isVoting[candidate.stripId] || !isConnected}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isVoting[candidate.stripId] ? 'Voting...' : 'Vote'}
+                    </button>
+                  </div>
+                </div>
+                {voteCounts && voteCounts[index] && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    Current votes: {ethers.formatEther(voteCounts[index])} ETH
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-4 text-gray-500">
+            No candidates available yet. Create a new strip to get started!
+          </div>
+        )}
       </div>
     </div>
   );

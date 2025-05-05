@@ -20,6 +20,7 @@ export default function Feed() {
           throw new Error('Failed to fetch comics');
         }
         const data = await response.json();
+        console.log('Comics:', data);
         setComics(data);
       } catch (err) {
         setError(err.message);
@@ -110,8 +111,8 @@ export default function Feed() {
             <div className="relative w-full h-full group">
               {/* Image */}
               <img
-                src={item.coverImage}
-                alt={item.coverImage}
+                src={item.image}
+                alt={item.image}
                 className="w-full h-full object-cover"
               />
               {/* Overlay with text */}

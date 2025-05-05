@@ -4,20 +4,22 @@ import { getDatabase } from '@/app/lib/db';
 export async function POST(request) {
   try {
     const db = await getDatabase();
-    const { title, description, artisticStyle } = await request.json();
+    const { name, image, artisticStyle, txHash, comicId } = await request.json();
 
-    const comic = await db.collection('comics').insertOne({
-      title,
-      description,
+    //TODO tx is valid?
+
+    const comic = await db.collection('comics'+ process.env.DATABASE_VERSION).insertOne({
+      comicId,
+      name,
+      image,
       artisticStyle,
-      characters: [],
-      coverImage: '',
+      txHash,
       createdAt: new Date(),
       updatedAt: new Date()
     });
 
     return NextResponse.json({ 
-      comicId: comic.insertedId.toString(),
+      comicId: comic.comicId,
       message: 'Comic created successfully' 
     });
   } catch (error) {
@@ -32,7 +34,7 @@ export async function POST(request) {
 export async function GET() {
   try {
     const db = await getDatabase();
-    const comics = await db.collection('comics')
+    const comics = await db.collection('comics'+ process.env.DATABASE_VERSION)
       .find({})
       .sort({ createdAt: -1 })
       .toArray();
