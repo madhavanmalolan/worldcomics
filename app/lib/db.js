@@ -1,10 +1,13 @@
 import { MongoClient } from 'mongodb';
+import dotenv from 'dotenv';
 
-const uri = 'mongodb://localhost:27017';
+dotenv.config();
+
+const DATABASE_URL = process.env.DATABASE_URL;
 const dbName = 'comicsDB';
 
 if (!global.mongoClient) {
-  global.mongoClient = new MongoClient(uri);
+  global.mongoClient = new MongoClient(DATABASE_URL);
 }
 
 export async function getDatabase() {

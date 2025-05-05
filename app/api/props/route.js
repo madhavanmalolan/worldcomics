@@ -1,24 +1,28 @@
 import OpenAI from 'openai';
 import { NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
+import { File } from 'formdata-node';
 
+// Initialize OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-// Add the missing imageUrlToBase64 function
-async function imageUrlToBase64(imageUrl) {
+// Function to fetch image and convert to base64
+async function fetchImageAsBuffer(imageUrl) {
   try {
     const response = await fetch(imageUrl);
     const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    return buffer.toString('base64');
+    return Buffer.from(arrayBuffer);
   } catch (error) {
-    console.error('Error converting image:', error);
-    throw new Error('Failed to process image URL');
+    console.error('Error fetching image:', error);
+    throw new Error('Failed to fetch image');
   }
 }
 
-async function saveImageToFile(imageData, requestId, prefix = 'character') {
+// Function to save image to file
+async function saveImageToFile(imageData, requestId, prefix = 'prop') {
   try {
     const fs = require('fs');
     const path = require('path');
@@ -56,44 +60,42 @@ export async function POST(request) {
   try {
     const { name, description, style } = await request.json();
     
-    console.log(`[${requestId}] Received request:`, { name, description, style });
+    console.log(`[${requestId}] Received prop request:`, { name, description, style });
     
-    if (!name || !description || !style) {
+    if (!name || !description) {
       return NextResponse.json(
-        { error: 'Name, description and style are required' },
+        { error: 'Name and description are required' },
         { status: 400 }
       );
     }
 
-    const characterPrompt = `Create a character reference sheet for "${name}" with the following description: ${description}
+    const propStyle = style || "Detailed, realistic object";
+    
+    // Create a prompt specifically for prop generation
+    const propPrompt = `Create a detailed image of a "${name}" object with the following description: ${description}
 
-The image should be split into two parts:
-1. LEFT SIDE: A full-body standing view showing the entire character, including their clothing and posture
-2. RIGHT SIDE: A close-up portrait view of the character's face and shoulders
-
-Style: ${style}
+Style: ${propStyle}
 
 Important details:
-- Make both views clearly of the same character with consistent features
-- The full-body view should show the complete outfit and physical build
-- The close-up view should focus on facial features, expression, and hair details
-- Use a clean, simple background that doesn't distract from the character
-- Do not include any text labels or title in the image`;
+- This should be a standalone object with a transparent or simple background
+- Show the object from its most recognizable angle
+- Include appropriate details, textures, and lighting
+- Make the object detailed enough to be used as a prop in different scenes
+- Do not include any text labels or title in the image
+- The object should appear to be at a realistic scale`;
 
-    console.log(`[${requestId}] Using prompt:`, characterPrompt);
+    console.log(`[${requestId}] Using prop prompt:`, propPrompt);
 
-    // Use a wider aspect ratio to accommodate both views
+    // Generate the prop image
     const response = await openai.images.generate({
-      prompt: characterPrompt,
+      prompt: propPrompt,
       model: "gpt-image-1",
       n: 1,
       quality: "low",
-      size: "1536x1024"  // Using a wider format (7:4 aspect ratio)
+      size: "1024x1024"
     });
 
-    // The response is already a JavaScript object, no need to call .json()
-   // console.log(`[${requestId}] API response:`, JSON.stringify(response, null, 2));
-    
+    // Process the response
     let imageData = null;
     
     // Check for b64_json in the response
@@ -105,7 +107,10 @@ Important details:
     else if (response.data?.[0]?.url) {
       console.log(`[${requestId}] Found image URL in response`);
       const imageUrl = response.data[0].url;
-      imageData = await imageUrlToBase64(imageUrl);
+      
+      // Fetch the image and convert to base64
+      const imageBuffer = await fetchImageAsBuffer(imageUrl);
+      imageData = imageBuffer.toString('base64');
     }
     else {
       console.error(`[${requestId}] No image data found in response:`, response);
@@ -113,14 +118,14 @@ Important details:
     }
     
     // Save files and get paths
-    const paths = await saveImageToFile(imageData, requestId);
+    const paths = await saveImageToFile(imageData, requestId, 'prop');
     
     return NextResponse.json({ 
-      character: {
+      prop: {
         id: requestId,
         name,
         description,
-        style,
+        style: propStyle,
         image: `data:image/png;base64,${imageData}`,
         imagePath: paths.imagePath,
         base64Path: paths.base64Path
@@ -128,23 +133,10 @@ Important details:
     });
 
   } catch (error) {
-    console.error(`[${requestId}] Full error:`, {
-      message: error.message,
-      status: error.status,
-      response: error.response,
-      stack: error.stack
-    });
-    
-    if (error.response) {
-      console.error(`[${requestId}] API error details:`, {
-        status: error.response.status,
-        statusText: error.response.statusText,
-        data: error.response.data
-      });
-    }
+    console.error(`[${requestId}] Prop generation error:`, error.message);
     return NextResponse.json(
-      { error: `Failed to generate character portrait: ${error.message}` },
+      { error: `Failed to generate prop: ${error.message}` },
       { status: 500 }
     );
   }
-}
+} 
