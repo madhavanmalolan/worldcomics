@@ -12,7 +12,7 @@ const openai = new OpenAI({
 // Function to fetch image and convert to base64
 async function fetchImageAsBuffer(imageUrl) {
   try {
-    const response = await fetch(imageUrl);
+    const response = await fetch(process.env.BASE_URL + imageUrl);
     const arrayBuffer = await response.arrayBuffer();
     return Buffer.from(arrayBuffer);
   } catch (error) {
@@ -84,14 +84,6 @@ Do not include any title banner or comic name text in the image.`;
         // Add to our reference files
         referenceFiles.push(sceneFile);
         
-        // Save debug file
-        const debugDir = path.join(process.cwd(), 'debug-images');
-        if (!fs.existsSync(debugDir)) {
-          fs.mkdirSync(debugDir, { recursive: true });
-        }
-        
-        const debugFilePath = path.join(debugDir, `scene-${requestId}.png`);
-        fs.writeFileSync(debugFilePath, imageBuffer);
         
         // Update the prompt to reference the scene
         detailedPrompt += `\n\nSCENE BACKGROUND:
@@ -126,14 +118,6 @@ Do not include any title banner or comic name text in the image.`;
             // Add to our reference files
             referenceFiles.push(propFile);
             
-            // Save debug file
-            const debugDir = path.join(process.cwd(), 'debug-images');
-            if (!fs.existsSync(debugDir)) {
-              fs.mkdirSync(debugDir, { recursive: true });
-            }
-            
-            const debugFilePath = path.join(debugDir, `prop-${prop.name}-${requestId}.png`);
-            fs.writeFileSync(debugFilePath, imageBuffer);
             
             // Add to prop details
             propDetails += `\n- Include the "${prop.name}" prop as shown in reference image`;
@@ -176,15 +160,6 @@ Do not include any title banner or comic name text in the image.`;
         // Add to our files array (at the beginning to prioritize it)
         characterFiles.push(previousPanelFile);
         
-        // Save debug file
-        const debugDir = path.join(process.cwd(), 'debug-images');
-        if (!fs.existsSync(debugDir)) {
-          fs.mkdirSync(debugDir, { recursive: true });
-        }
-        
-        const debugFilePath = path.join(debugDir, `previous-panel-${requestId}.png`);
-        fs.writeFileSync(debugFilePath, imageBuffer);
-        console.log(`[${requestId}] Saved previous panel debug file to: ${debugFilePath}`);
         
         // Update the base prompt to reference the previous panel
         detailedPrompt = `Create a comic panel in ${comic.style} style that continues the previous scene.
@@ -221,19 +196,6 @@ Do not include any title banner or comic name text in the image.`;
           const file = new File([imageBuffer], `${char.name}.png`, { type: 'image/png' });
           console.log(`[${requestId}] Created File object for ${char.name}`);
           
-          // Debug: Save the File object's content
-          const debugDir = path.join(process.cwd(), 'debug-images');
-          console.log(`[${requestId}] Debug directory path: ${debugDir}`);
-          
-          if (!fs.existsSync(debugDir)) {
-            console.log(`[${requestId}] Creating debug directory...`);
-            fs.mkdirSync(debugDir, { recursive: true });
-          }
-          
-          const fileContent = await file.arrayBuffer();
-          const debugFilePath = path.join(debugDir, `file-debug-${char.name}-${requestId}.png`);
-          fs.writeFileSync(debugFilePath, Buffer.from(fileContent));
-          console.log(`[${requestId}] Saved debug file to: ${debugFilePath}`);
           
           characterFiles.push(file);
         } catch (error) {

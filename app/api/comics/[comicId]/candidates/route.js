@@ -75,6 +75,27 @@ export async function GET(request, { params }) {
       .toArray();
     console.log("All candidates:", candidates);
 
+    const dayCandidates = [];
+    const strips = [];
+    for( let i = 0; i < currentDay; i++) {
+      const dayCandidates = candidates.filter(candidate => candidate.day === i.toString());
+      console.log("dayCandidates", dayCandidates);
+      let maxVotes = 0; 
+      let maxVotedCandidate = null;
+      for( let j = 0; j < dayCandidates.length; j++) {
+        const candidate = dayCandidates[j];
+        console.log("candidate", candidate);
+        // get votes for candidate
+        const votes = await comicsContract.getVoteCount(candidate.stripId);
+        if(votes >= maxVotes) {
+          maxVotes = votes;
+          maxVotedCandidate = candidate;
+        }
+      }
+      console.log("maxVotedCandidate", maxVotedCandidate);
+      strips.push(maxVotedCandidate);
+    }
+
     // Filter candidates for current day
     const currentDayCandidates = candidates.filter(candidate => 
       candidate.imageUrls && 
@@ -83,7 +104,10 @@ export async function GET(request, { params }) {
     );
     console.log("Filtered candidates:", currentDayCandidates);
 
-    return NextResponse.json(currentDayCandidates);
+    return NextResponse.json({
+      candidates: currentDayCandidates,
+      strips: strips
+    });
   } catch (error) {
     console.error('Error fetching candidates:', error);
     return NextResponse.json(

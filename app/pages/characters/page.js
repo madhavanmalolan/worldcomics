@@ -182,6 +182,7 @@ export default function CharactersPage() {
                 Character Image
               </label>
               <ImageGenerator 
+                imageType="character"
                 onImageSelected={(imageUrl) => setCharacterImage(imageUrl)}
               />
             </div>

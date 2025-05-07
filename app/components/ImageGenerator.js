@@ -6,7 +6,7 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagm
 import { ethers } from 'ethers';
 import { CONTRACT_ADDRESS, CONTRACT_ABI, IMAGE_GENERATION_PRICE } from '@/app/constants/contract';
 
-export default function ImageGenerator({ onImageSelected, currentImage, artisticStyle }) {
+export default function ImageGenerator({ onImageSelected, currentImage, artisticStyle, imageType }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [generatedImage, setGeneratedImage] = useState(null);
@@ -108,16 +108,61 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
       });
 
       // After payment is confirmed, generate the image
-      const response = await axios.post('/api/generate-image', {
-        prompt: prompt + ".\n\nbe sure to use the artistic style : "+artisticStyle,
-        characters: selectedCharacters,
-        props: selectedProps,
-        artisticStyle,
-      });
+      let generatedImage = null;
+      let generatedText = null;
+      if(imageType === "character"){
+        console.log("Generating character image");
+        const response = await axios.post('/api/generate-image/characters', {
+          name: " ",
+          description: prompt,
+          style: "hyper realistic",
+        });
+        console.log(response.data);
+        generatedImage = response.data.character.image;
+        generatedText = "";
+      } else if(imageType === "prop") {
+        const response = await axios.post('/api/generate-image/props', {
+          name: " ",
+          description: prompt,
+          style: "hyper realistic",
+        });
+        console.log(response.data);
+        generatedImage = response.data.prop.image;
+        generatedText = "";
 
-      setGeneratedImage(response.data.image);
-      if (response.data.text) {
-        setGeneratedText(response.data.text);
+      } else if(imageType === "comic"){
+        console.log("Selected props: ", selectedProps);
+        const response = await axios.post('/api/generate-image', {
+          prompt,
+          comic : {
+            name : "",
+            style : artisticStyle,
+            characters: selectedCharacters.map(c => ({name : c.name, portraitUrl: c.image })),
+          },
+          props: selectedProps.map(p => ({name : p.name, imageUrl: p.image })),
+        });
+        console.log(response.data);
+        generatedImage = response.data.image;
+        generatedText = response.data.text;
+
+      } else {
+        const response = await axios.post('/api/generate-image', {
+          prompt,
+          comic : {
+            name : "",
+            style : artisticStyle,
+            characters: selectedCharacters.map(c => ({name : c.name, portraitUrl: c.image })),
+            props: selectedProps.map(p => ({name : p.name, portraitUrl: p.image })),
+          }
+        });
+        console.log(response.data);
+        generatedImage = response.data.image;
+        generatedText = response.data.text;
+      }
+
+      setGeneratedImage(generatedImage);
+      if (generatedText) {
+        setGeneratedText(generatedText);
       }
     } catch (error) {
       console.error('Error generating image:', error);

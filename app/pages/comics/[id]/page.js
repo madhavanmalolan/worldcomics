@@ -16,6 +16,7 @@ export default function Feed() {
   const [pages, setPages] = useState([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [candidates, setCandidates] = useState([]);
+  const [strips, setStrips] = useState([]);
   const [voteAmounts, setVoteAmounts] = useState({});
   const [isVoting, setIsVoting] = useState({});
   const router = useRouter();
@@ -78,8 +79,10 @@ export default function Feed() {
       const response = await fetch(`/api/comics/${comicId}/candidates`);
       const data = await response.json();
       console.log("data", data);
-      const candidates = data.filter(candidate => candidate.imageUrls && candidate.imageUrls.length > 0);
-      setCandidates(candidates);
+      setCandidates(data.candidates.filter(candidate => candidate.imageUrls && candidate.imageUrls.length > 0));
+      setStrips(data.strips);
+      console.log("candidates", candidates);
+      console.log("strips", strips);
     } catch (error) {
       console.error('Error loading candidates:', error);
     }
@@ -203,9 +206,53 @@ export default function Feed() {
 
   return (
     <div className="min-h-screen bg-[#f6f8fa]">
+      
       <div className="h-px bg-[#d0d7de] mt-3"></div>
       <div className="max-w-[1280px] mx-auto pt-3">
-        <h2 className="text-lg font-medium text-gray-900">Candidates for tomorrow's strip</h2>
+      <h2 className="text-lg font-medium text-gray-900 mt-8">Published Strips</h2>
+        {strips && strips.length > 0 ? (
+          <div className="mt-4 space-y-8">
+            {strips.map((strip, index) => (
+              <div key={index} className="bg-white p-4 rounded-lg shadow">
+                <div className="flex justify-center w-full">
+                  <div className="flex gap-4 w-full max-w-4xl">
+                    {strip.imageUrls.map((imageUrl, imgIndex) => (
+                      <div 
+                        key={imgIndex} 
+                        className="flex-1 aspect-square min-w-0"
+                      >
+                        <img
+                          src={imageUrl}
+                          alt={`Strip ${index + 1} Panel ${imgIndex + 1}`}
+                          className="w-full h-full object-cover rounded-md"
+                        />
+                      </div>
+                    ))}
+                    {Array.from({ length: 4 - strip.imageUrls.length }).map((_, i) => (
+                      <div key={`empty-${i}`} className="flex-1" />
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center justify-between">
+                  <div className="text-sm text-gray-500">
+                    Published {new Date(strip.createdAt).toLocaleDateString()} ({strip.stripId})
+                  </div>
+                  {strip.voteCount && (
+                    <div className="text-sm text-gray-600">
+                      Total votes: {ethers.formatEther(strip.voteCount)} ETH
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-4 text-gray-500">
+            No published strips yet.
+          </div>
+        )}
+
+        <h2 className="text-lg font-medium text-gray-900 mt-8">Candidates for tomorrow's strip</h2>
         {isConnected ? (
           <div className="mt-2 text-sm text-gray-600">
             Connected wallet: {address}
@@ -215,29 +262,29 @@ export default function Feed() {
             Connect your wallet to vote
           </div>
         )}
-        <div className="mt-4">
-          <Link
-            href={`/pages/comics/${comicId}/create-strip`}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            Create Strip
-          </Link>
-        </div>
 
         {candidates && candidates.length > 0 ? (
           <div className="mt-4 space-y-8">
             {candidates.map((candidate, index) => (
               <div key={index} className="bg-white p-4 rounded-lg shadow">
-                <div className={`grid grid-cols-${candidate.imageUrls.length} gap-4`}>
-                  {candidate.imageUrls.map((imageUrl, imgIndex) => (
-                    <div key={imgIndex} className="aspect-square">
-                      <img
-                        src={imageUrl}
-                        alt={`Strip ${index + 1} Panel ${imgIndex + 1}`}
-                        className="w-full h-full object-cover rounded-md"
-                      />
-                    </div>
-                  ))}
+                <div className="flex justify-center w-full">
+                  <div className="flex gap-4 w-full max-w-4xl">
+                    {candidate.imageUrls.map((imageUrl, imgIndex) => (
+                      <div 
+                        key={imgIndex} 
+                        className="flex-1 aspect-square min-w-0"
+                      >
+                        <img
+                          src={imageUrl}
+                          alt={`Strip ${index + 1} Panel ${imgIndex + 1}`}
+                          className="w-full h-full object-cover rounded-md"
+                        />
+                      </div>
+                    ))}
+                    {Array.from({ length: 4 - candidate.imageUrls.length }).map((_, i) => (
+                      <div key={`empty-${i}`} className="flex-1" />
+                    ))}
+                  </div>
                 </div>
                 <div className="mt-4 flex items-center justify-between">
                   <div className="text-sm text-gray-500">
@@ -289,6 +336,17 @@ export default function Feed() {
             No candidates available yet. Create a new strip to get started!
           </div>
         )}
+        <div className="mt-4">
+          <Link
+            href={`/pages/comics/${comicId}/create-strip`}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            Create Strip
+          </Link>
+        </div>
+
+
+
       </div>
     </div>
   );

@@ -212,6 +212,7 @@ export default function CreateComicPage() {
                 Comic Cover Image
               </label>
               <ImageGenerator 
+                imageType="root"
                 artisticStyle={artisticStyle}
                 onImageSelected={(imageUrl) => setComicImage(imageUrl)}
               />

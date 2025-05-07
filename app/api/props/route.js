@@ -49,7 +49,7 @@ export async function POST(request) {
 
     // Get database connection
     const db = await getDatabase();
-    const prop = await db.collection('props').insertOne({
+    const prop = await db.collection('props'+process.env.DATABASE_VERSION).insertOne({
       txHash,
       name: providedName,
       image: providedImage,
@@ -74,7 +74,7 @@ export async function GET(request) {
 
     // Get database connection
     const db = await getDatabase();
-    const props = await db.collection('props').find({
+    const props = await db.collection('props'+process.env.DATABASE_VERSION).find({
       name: { $regex: searchQuery || '', $options: 'i' }
     }).toArray();
     

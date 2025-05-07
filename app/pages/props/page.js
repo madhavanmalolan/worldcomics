@@ -179,6 +179,7 @@ export default function PropsPage() {
                 Prop Image
               </label>
               <ImageGenerator 
+                imageType="prop"
                 onImageSelected={(imageUrl) => setPropImage(imageUrl)}
               />
             </div>

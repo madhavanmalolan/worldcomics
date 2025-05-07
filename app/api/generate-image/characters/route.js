@@ -24,7 +24,7 @@ async function saveImageToFile(imageData, requestId, prefix = 'character') {
     const path = require('path');
     
     // Create a dedicated folder for generated images if it doesn't exist
-    const imagesDir = path.join(process.cwd(), 'public', 'generated-images');
+    const imagesDir = path.join(process.cwd(), 'public', 'uploads');
     if (!fs.existsSync(imagesDir)) {
       fs.mkdirSync(imagesDir, { recursive: true });
     }
@@ -40,9 +40,9 @@ async function saveImageToFile(imageData, requestId, prefix = 'character') {
     console.log(`Saved PNG to: ${imageFilePath}`);
     
     return {
-      base64Path: `/generated-images/${prefix}-${requestId}.txt`,
-      imagePath: `/generated-images/${prefix}-${requestId}.png`,
-      publicUrl: `/generated-images/${prefix}-${requestId}.png` // URL for browser access
+      base64Path: `/uploads/${prefix}-${requestId}.txt`,
+      imagePath: `/uploads/${prefix}-${requestId}.png`,
+      publicUrl: `/uploads/${prefix}-${requestId}.png` // URL for browser access
     };
   } catch (err) {
     console.error(`Error saving files:`, err.message);
@@ -123,7 +123,8 @@ Important details:
         style,
         image: `data:image/png;base64,${imageData}`,
         imagePath: paths.imagePath,
-        base64Path: paths.base64Path
+        base64Path: paths.base64Path,
+        publicUrl: paths.publicUrl
       }
     });
 

@@ -242,6 +242,7 @@ export default function CreateStrip({ comicId }) {
             ) : (
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center h-64">
                 <ImageGenerator
+                  imageType="comic"
                   artisticStyle={comic?.artisticStyle}
                   onImageSelected={(url) => handleImageGenerated(url, index)}
                   currentImage={null}
