@@ -11,6 +11,7 @@ import axios from 'axios';
 export default function PropsPage() {
   const [propName, setPropName] = useState('');
   const [propImage, setPropImage] = useState('');
+  const [artisticStyle, setArtisticStyle] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [txHash, setTxHash] = useState('');
   const [props, setProps] = useState([]);
@@ -124,7 +125,12 @@ export default function PropsPage() {
       setTxHash(tx);
 
       // Call the API route to save the prop
-      const response = await axios.post('/api/props', { txHash: tx, name: propName, image: propImage }, {
+      const response = await axios.post('/api/props', { 
+        txHash: tx, 
+        name: propName, 
+        image: propImage,
+        artisticStyle: artisticStyle 
+      }, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -135,6 +141,7 @@ export default function PropsPage() {
       // Reset form
       setPropName('');
       setPropImage('');
+      setArtisticStyle('');
     } catch (error) {
       console.error('Error saving prop:', error);
       alert('Failed to save prop. Please try again.');
@@ -188,6 +195,21 @@ export default function PropsPage() {
               </p>
             </div>
 
+            {/* Artistic Style Input */}
+            <div>
+              <label htmlFor="artisticStyle" className="block text-sm font-medium text-gray-700 mb-1">
+                Artistic Style
+              </label>
+              <input
+                type="text"
+                id="artisticStyle"
+                value={artisticStyle}
+                onChange={(e) => setArtisticStyle(e.target.value)}
+                placeholder="Enter artistic style (e.g., 'pixel art', 'watercolor', '3D render')"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
             {/* Image Generator */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -196,6 +218,7 @@ export default function PropsPage() {
               <ImageGenerator 
                 imageType="prop"
                 onImageSelected={(imageUrl) => setPropImage(imageUrl)}
+                artisticStyle={artisticStyle}
               />
             </div>
 

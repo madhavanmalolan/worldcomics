@@ -11,6 +11,7 @@ import axios from 'axios';
 export default function CharactersPage() {
   const [characterName, setCharacterName] = useState('');
   const [characterImage, setCharacterImage] = useState('');
+  const [artisticStyle, setArtisticStyle] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [txHash, setTxHash] = useState('');
   const [characters, setCharacters] = useState([]);
@@ -127,17 +128,23 @@ export default function CharactersPage() {
       setTxHash(tx);
 
       // Call the API route to save the character
-      const response = await axios.post('/api/characters', { txHash: tx, name: characterName, image: characterImage }, {
+      const response = await axios.post('/api/characters', { 
+        txHash: tx, 
+        name: characterName, 
+        image: characterImage,
+        artisticStyle: artisticStyle 
+      }, {
         headers: {
           'Content-Type': 'application/json',
         },
       });
 
       console.log('API Response:', response.data);
-      
+      window.location.reload();
       // Reset form
       setCharacterName('');
       setCharacterImage('');
+      setArtisticStyle('');
     } catch (error) {
       console.error('Error saving character:', error);
       alert('Failed to save character. Please try again.');
@@ -191,6 +198,21 @@ export default function CharactersPage() {
               </p>
             </div>
 
+            {/* Artistic Style Input */}
+            <div>
+              <label htmlFor="artisticStyle" className="block text-sm font-medium text-gray-700 mb-1">
+                Artistic Style
+              </label>
+              <input
+                type="text"
+                id="artisticStyle"
+                value={artisticStyle}
+                onChange={(e) => setArtisticStyle(e.target.value)}
+                placeholder="Enter artistic style (e.g., 'pixel art', 'watercolor', '3D render')"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
             {/* Image Generator */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -199,6 +221,7 @@ export default function CharactersPage() {
               <ImageGenerator 
                 imageType="character"
                 onImageSelected={(imageUrl) => setCharacterImage(imageUrl)}
+                artisticStyle={artisticStyle}
               />
             </div>
 

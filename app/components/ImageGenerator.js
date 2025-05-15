@@ -115,7 +115,7 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
         const response = await axios.post('/api/generate-image/characters', {
           name: " ",
           description: prompt,
-          style: "hyper realistic",
+          style: artisticStyle,
         });
         console.log(response.data);
         generatedImage = response.data.character.image;
@@ -124,7 +124,7 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
         const response = await axios.post('/api/generate-image/props', {
           name: " ",
           description: prompt,
-          style: "hyper realistic",
+          style: artisticStyle,
         });
         console.log(response.data);
         generatedImage = response.data.prop.image;
