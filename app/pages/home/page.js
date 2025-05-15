@@ -33,9 +33,8 @@ export default function Feed() {
     fetchComics();
   }, []);
 
-  const filteredItems = comics.filter(item => true || 
-    item.theme.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.prompt.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredItems = comics.filter(item => 
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleItemClick = (item) => {
@@ -88,47 +87,35 @@ export default function Feed() {
         </div>
       </div>
 
-      {/* Image Generator */}
-      <div className="mb-6">
-        <div className="bg-white rounded-md border border-[#d0d7de] p-6">
-          <h2 className="text-xl font-semibold text-[#24292f] mb-4">Generate Comic Art</h2>
-          <ImageGenerator 
-            onImageSelected={(imageUrl) => {
-              // Handle generated image if needed
-            }}
-          />
-        </div>
-      </div>
-
       {/* Grid of Thumbnails */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
         {filteredItems.map((item) => (
-          <div
-            key={item._id}
-            className="aspect-square rounded-md border border-[#d0d7de] overflow-hidden hover:shadow-md transition-all duration-200 cursor-pointer bg-white"
-            onClick={() => handleItemClick(item)}
-          >
-            <div className="relative w-full h-full group">
-              {/* Image */}
-              <img
-                src={item.image}
-                alt={item.image}
-                className="w-full h-full object-cover"
-              />
-              {/* Overlay with text */}
-              <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-90 transition-all duration-200 flex flex-col justify-between p-4">
-                <h3 className="text-white font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  {item.title}
-                </h3>
-                <div className="flex flex-col gap-2">
-                  <span className="text-white text-sm bg-[#1f232826] bg-opacity-90 px-2 py-1 rounded-full self-start opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    {item.comicId}
-                  </span>
-                  <span className="text-white text-sm bg-[#1f232826] bg-opacity-90 px-2 py-1 rounded-full self-start opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    {new Date(item.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
+          <div>
+            <div
+              key={item._id}
+              className="aspect-square rounded-md border border-[#d0d7de] overflow-hidden hover:shadow-md transition-all duration-200 cursor-pointer bg-white"
+              onClick={() => handleItemClick(item)}
+            >
+              <div className="relative w-full h-full group">
+                {/* Image */}
+                <img
+                  src={item.image}
+                  alt={item.image}
+                  className="w-full h-full object-cover"
+                />
               </div>
+            </div>
+            <div className="mt-2">
+              <h3 className="font-semibold">
+                {item.name}
+              </h3>
+              <p className="text-sm text-[#57606a]">
+              {new Date(item.createdAt).toLocaleDateString('en-US', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+              })}
+              </p>
             </div>
           </div>
         ))}

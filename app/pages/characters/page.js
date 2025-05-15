@@ -52,6 +52,21 @@ export default function CharactersPage() {
     hash: mintData?.hash,
   });
 
+  // Refresh characters when transaction is confirmed
+  useEffect(() => {
+    if (isConfirmed) {
+      const fetchCharacters = async () => {
+        try {
+          const response = await axios.get('/api/characters');
+          setCharacters(response.data);
+        } catch (error) {
+          console.error('Error fetching characters:', error);
+        }
+      };
+      fetchCharacters();
+    }
+  }, [isConfirmed]);
+
   // Fetch characters on component mount
   useEffect(() => {
     const fetchCharacters = async () => {
@@ -185,17 +200,6 @@ export default function CharactersPage() {
                 imageType="character"
                 onImageSelected={(imageUrl) => setCharacterImage(imageUrl)}
               />
-            </div>
-
-            {/* Debug Info */}
-            <div className="text-sm text-gray-600 space-y-2">
-              <p>Admin Address: {adminAddress}</p>
-              <p>Characters Address: {charactersAddress || 'Loading...'}</p>
-              <p>Loading Address: {isLoadingAddress ? 'Yes' : 'No'}</p>
-              <p>Address Error: {addressError ? addressError.message : 'None'}</p>
-              <p>Mint Price: {mintPrice ? parseFloat(parseEther(mintPrice.toString())) : 'Loading...'} {mintPrice}</p>
-              <p>Loading Price: {isLoadingPrice ? 'Yes' : 'No'}</p>
-              <p>Price Error: {priceError ? priceError.message : 'None'}</p>
             </div>
 
             {/* Save Button */}

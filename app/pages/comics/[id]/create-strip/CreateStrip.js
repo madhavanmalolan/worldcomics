@@ -78,7 +78,6 @@ export default function CreateStrip({ comicId }) {
 
   const handleSave = async () => {
     if (images.every(img => img === null)) return;
-    alert('Saving strip...');
     if (!isConnected) {
       alert('Please connect your wallet to create a strip');
       return;
@@ -158,6 +157,8 @@ export default function CreateStrip({ comicId }) {
 
       const data = await response.json();
       console.log('Strip saved:', data);
+
+      router.push(`/pages/comics/${comicId}`);
       
       // Redirect back to the comic page
       //router.push(`/comics/${comicId}`);

@@ -226,20 +226,31 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
     const lineHeight = bubble.fontSize || selectedFontSize;
     const maxWidth = bubble.width - 20;
     let line = '';
-    let y = bubble.y - (Math.ceil(words.length / 3) * lineHeight) / 2;
+    let lines = [];
     
+    // First pass: calculate all lines
     for (let i = 0; i < words.length; i++) {
       const testLine = line + words[i] + ' ';
       const metrics = ctx.measureText(testLine);
       if (metrics.width > maxWidth && i > 0) {
-        ctx.fillText(line, bubble.x, y);
+        lines.push(line);
         line = words[i] + ' ';
-        y += lineHeight;
       } else {
         line = testLine;
       }
     }
-    ctx.fillText(line, bubble.x, y);
+    lines.push(line);
+
+    // Calculate total height of text
+    const totalHeight = lines.length * lineHeight;
+    
+    // Calculate starting Y position to center text vertically
+    const startY = bubble.y - (totalHeight - lineHeight) / 2;
+    
+    // Draw each line
+    lines.forEach((line, index) => {
+      ctx.fillText(line, bubble.x, startY + (index * lineHeight));
+    });
   };
 
   const drawPointer = (ctx, pointer) => {
@@ -336,6 +347,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
 
       if (clickedElement) {
         setSelectedElement(clickedElement);
+        setElements([...elements]);
         // Only start dragging if we're clicking on the currently selected element
         if (clickedElement === selectedElement) {
           setIsDragging(true);
@@ -343,6 +355,8 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
         }
       } else {
         setSelectedElement(null);
+        setElements([...elements]);
+
       }
     } else if (tool === 'bubble') {
       const newBubble = {
@@ -501,6 +515,12 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
   const handleSave = async () => {
     if (!canvasRef.current) return;
 
+    // Deselect any selected element before saving
+    handleDone();
+
+    // Wait for 1 second to allow the canvas to redraw
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     try {
       // Convert canvas to blob
       const canvas = canvasRef.current;
@@ -574,6 +594,12 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
     setShowCandidates(false);
   };
 
+  const handleDone = () => {
+    setSelectedElement(null);
+    // Force a redraw by creating a new array reference
+    setElements([...elements]);
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex gap-2 flex-wrap">
@@ -592,14 +618,6 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
           onClick={() => setTool('bubble')}
         >
           Add Dialogue
-        </button>
-        <button
-          className={`px-4 py-2 rounded ${
-            tool === 'pointer' ? 'bg-blue-500 text-white' : 'bg-gray-200'
-          }`}
-          onClick={() => setTool('pointer')}
-        >
-          Add Pointer
         </button>
         <select
           value={selectedFont}

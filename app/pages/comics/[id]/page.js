@@ -206,16 +206,14 @@ export default function Feed() {
 
   return (
     <div className="min-h-screen bg-[#f6f8fa]">
-      
-      <div className="h-px bg-[#d0d7de] mt-3"></div>
-      <div className="max-w-[1280px] mx-auto pt-3">
-      <h2 className="text-lg font-medium text-gray-900 mt-8">Published Strips</h2>
+      <div className="px-4 sm:px-6 lg:px-8">
+        <h2 className="text-lg font-medium text-gray-900 mt-8">Published Strips</h2>
         {strips && strips.length > 0 ? (
           <div className="mt-4 space-y-8">
             {strips.map((strip, index) => (
               <div key={index} className="bg-white p-4 rounded-lg shadow">
                 <div className="flex justify-center w-full">
-                  <div className="flex gap-4 w-full max-w-4xl">
+                  <div className="flex gap-4 w-full">
                     {strip.imageUrls.map((imageUrl, imgIndex) => (
                       <div 
                         key={imgIndex} 
@@ -235,7 +233,7 @@ export default function Feed() {
                 </div>
                 <div className="mt-4 flex items-center justify-between">
                   <div className="text-sm text-gray-500">
-                    Published {new Date(strip.createdAt).toLocaleDateString()} ({strip.stripId})
+                    Published {new Date(strip.createdAt).toLocaleDateString()}
                   </div>
                   {strip.voteCount && (
                     <div className="text-sm text-gray-600">
@@ -253,22 +251,18 @@ export default function Feed() {
         )}
 
         <h2 className="text-lg font-medium text-gray-900 mt-8">Candidates for tomorrow's strip</h2>
-        {isConnected ? (
-          <div className="mt-2 text-sm text-gray-600">
-            Connected wallet: {address}
-          </div>
-        ) : (
+        {!isConnected ? (
           <div className="mt-2 text-sm text-gray-600">
             Connect your wallet to vote
           </div>
-        )}
+        ) : <></>}
 
         {candidates && candidates.length > 0 ? (
           <div className="mt-4 space-y-8">
             {candidates.map((candidate, index) => (
               <div key={index} className="bg-white p-4 rounded-lg shadow">
                 <div className="flex justify-center w-full">
-                  <div className="flex gap-4 w-full max-w-4xl">
+                  <div className="flex gap-4 w-full">
                     {candidate.imageUrls.map((imageUrl, imgIndex) => (
                       <div 
                         key={imgIndex} 
@@ -288,7 +282,7 @@ export default function Feed() {
                 </div>
                 <div className="mt-4 flex items-center justify-between">
                   <div className="text-sm text-gray-500">
-                    Created {new Date(candidate.createdAt).toLocaleDateString()} ({candidate.stripId})
+                    Created {new Date(candidate.createdAt).toLocaleDateString()}
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2">
@@ -336,6 +330,7 @@ export default function Feed() {
             No candidates available yet. Create a new strip to get started!
           </div>
         )}
+
         <div className="mt-4">
           <Link
             href={`/pages/comics/${comicId}/create-strip`}
@@ -344,9 +339,6 @@ export default function Feed() {
             Create Strip
           </Link>
         </div>
-
-
-
       </div>
     </div>
   );

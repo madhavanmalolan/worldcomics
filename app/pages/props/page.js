@@ -50,6 +50,21 @@ export default function PropsPage() {
     hash: mintData?.hash,
   });
 
+  // Refresh props when transaction is confirmed
+  useEffect(() => {
+    if (isConfirmed) {
+      const fetchProps = async () => {
+        try {
+          const response = await axios.get('/api/props');
+          setProps(response.data);
+        } catch (error) {
+          console.error('Error fetching props:', error);
+        }
+      };
+      fetchProps();
+    }
+  }, [isConfirmed]);
+
   // Fetch props on component mount
   useEffect(() => {
     const fetchProps = async () => {
@@ -116,7 +131,7 @@ export default function PropsPage() {
       });
 
       console.log('API Response:', response.data);
-      
+      window.location.reload();
       // Reset form
       setPropName('');
       setPropImage('');
