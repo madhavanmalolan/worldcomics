@@ -16,7 +16,6 @@ const queryClient = new QueryClient()
 const wagmiConfig = createConfig({
   chains: [baseSepolia],
   connectors: [
-
     coinbaseWallet({
       appName: 'onchainkit',
     }),
@@ -44,7 +43,7 @@ export default function RootLayout({ children }) {
         <WagmiProvider config={wagmiConfig}>
           <QueryClientProvider client={queryClient}>
             <Navbar />
-            <main className="min-h-screen bg-gray-50">
+            <main>
               {children}
             </main>
           </QueryClientProvider>

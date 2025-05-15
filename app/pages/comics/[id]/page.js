@@ -207,7 +207,6 @@ export default function Feed() {
   return (
     <div className="min-h-screen bg-[#f6f8fa]">
       <div className="px-4 sm:px-6 lg:px-8">
-        <h2 className="text-lg font-medium text-gray-900 mt-8">Published Strips</h2>
         {strips && strips.length > 0 ? (
           <div className="mt-4 space-y-8">
             {strips.map((strip, index) => (
@@ -331,12 +330,12 @@ export default function Feed() {
           </div>
         )}
 
-        <div className="mt-4">
+        <div className="mt-4 mb-12">
           <Link
             href={`/pages/comics/${comicId}/create-strip`}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
-            Create Strip
+            Add a new strip
           </Link>
         </div>
       </div>
