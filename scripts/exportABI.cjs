@@ -8,12 +8,14 @@ async function main() {
   const Characters = await hre.ethers.getContractFactory("Characters");
   const Comics = await hre.ethers.getContractFactory("Comics");
   const Props = await hre.ethers.getContractFactory("Props");
+  const Scenes = await hre.ethers.getContractFactory("Scenes");
   
   // Get the contract ABIs
   const adminABI = Admin.interface.formatJson();
   const charactersABI = Characters.interface.formatJson();
   const comicsABI = Comics.interface.formatJson();
   const propsABI = Props.interface.formatJson();
+  const scenesABI = Scenes.interface.formatJson();
   
   // Create the output directory if it doesn't exist
   const outputDir = path.join(__dirname, "..", "app", "constants");
@@ -26,7 +28,8 @@ async function main() {
     admin: { abi: JSON.parse(adminABI) },
     characters: { abi: JSON.parse(charactersABI) },
     comics: { abi: JSON.parse(comicsABI) },
-    props: { abi: JSON.parse(propsABI) }
+    props: { abi: JSON.parse(propsABI) },
+    scenes: { abi: JSON.parse(scenesABI) }
   };
 
   const abiPath = path.join(outputDir, "contracts.json");

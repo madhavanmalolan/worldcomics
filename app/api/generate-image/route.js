@@ -31,6 +31,7 @@ export async function POST(request) {
   
   try {
     const { prompt, comic, previousPanel, scene, props } = await request.json();
+    console.log(prompt, comic, previousPanel, scene, props);
     
     if (!comic  || !comic.style || !comic.characters || !prompt) {
       return NextResponse.json(

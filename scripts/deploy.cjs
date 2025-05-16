@@ -7,6 +7,7 @@ async function main() {
   const PROMPT_PRICE = "0.0";
   const BASE_CHARACTER_PRICE = "0.0";
   const BASE_PROP_FEE = "0.0";
+  const BASE_SCENE_FEE = "0.0";
   const BASE_COMIC_FEE = "0.0";
   const BASE_STRIP_FEE = "0.0"; 
 
@@ -39,6 +40,19 @@ async function main() {
   await props.updateBaseFee(hre.ethers.parseEther(BASE_PROP_FEE));
   console.log("Props base fee updated");
 
+  // Deploy Scenes contract
+  console.log("Deploying Scenes contract...");
+  const Scenes = await hre.ethers.getContractFactory("Scenes");
+  const scenes = await Scenes.deploy();
+  await scenes.waitForDeployment();
+  const scenesAddress = await scenes.getAddress();
+  console.log("Scenes deployed to:", scenesAddress);
+
+  // Update Scenes base fee
+  console.log("Updating Scenes base fee...");
+  await scenes.updateBaseFee(hre.ethers.parseEther(BASE_SCENE_FEE));
+  console.log("Scenes base fee updated");
+
   // Deploy Comics contract
   console.log("Deploying Comics contract...");
   const Comics = await hre.ethers.getContractFactory("Comics");
@@ -58,7 +72,8 @@ async function main() {
   const admin = await Admin.deploy(
     charactersAddress,
     propsAddress,
-    comicsAddress
+    comicsAddress,
+    scenesAddress
   );
   await admin.waitForDeployment();
   const adminAddress = await admin.getAddress();
@@ -72,6 +87,7 @@ async function main() {
     characters: charactersAddress,
     props: propsAddress,
     comics: comicsAddress,
+    scenes: scenesAddress
   };
 
   const outputDir = path.join(__dirname, "..", "app", "constants");

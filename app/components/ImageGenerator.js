@@ -18,7 +18,10 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
   const [showSearch, setShowSearch] = useState(false);
   const [selectedCharacters, setSelectedCharacters] = useState([]);
   const [selectedProps, setSelectedProps] = useState([]);
-  const [searchType, setSearchType] = useState(null); // 'character' or 'prop'
+  const [selectedScenes, setSelectedScenes] = useState([]);
+  const [searchType, setSearchType] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchBar, setShowSearchBar] = useState(false);
   const { address } = useAccount();
 
   // Contract write hook for payment
@@ -31,12 +34,12 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
     hash,
   });
 
-  // Handle character/prop search
+  // Handle character/prop/scene search
   const handlePromptChange = async (e) => {
     const value = e.target.value;
     setPrompt(value);
 
-    // Check for @ or # mention
+    // Check for @, #, or * mention
     const lastWord = value.split(' ').pop();
     if (lastWord.startsWith('@')) {
       const searchTerm = lastWord.substring(1);
@@ -62,30 +65,97 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
           console.error('Error searching props:', error);
         }
       }
+    } else if (lastWord.startsWith('*')) {
+      const searchTerm = lastWord.substring(1);
+      if (searchTerm.length > 0) {
+        try {
+          const response = await axios.get(`/api/scenes?search=${searchTerm}`);
+          setSearchResults(response.data);
+          setShowSearch(true);
+          setSearchType('scene');
+        } catch (error) {
+          console.error('Error searching scenes:', error);
+        }
+      }
     } else {
       setShowSearch(false);
       setSearchType(null);
     }
   };
 
-  // Handle character/prop selection
+  // Handle search bar input
+  const handleSearchChange = async (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+
+    if (value.length > 0) {
+      try {
+        let endpoint = '';
+        switch (searchType) {
+          case 'character':
+            endpoint = `/api/characters?search=${value}`;
+            break;
+          case 'prop':
+            endpoint = `/api/props?search=${value}`;
+            break;
+          case 'scene':
+            endpoint = `/api/scenes?search=${value}`;
+            break;
+        }
+        const response = await axios.get(endpoint);
+        setSearchResults(response.data);
+        setShowSearch(true);
+      } catch (error) {
+        console.error(`Error searching ${searchType}s:`, error);
+      }
+    } else {
+      setSearchResults([]);
+      setShowSearch(false);
+    }
+  };
+
+  // Handle search type selection
+  const handleSearchTypeSelect = (type) => {
+    setSearchType(type);
+    setShowSearchBar(true);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
+  // Handle character/prop/scene selection
   const handleItemSelect = (item) => {
-    const words = prompt.split(' ');
-    words[words.length - 1] = item.name.replace(/_/g, ' ');
-    setPrompt(words.join(' '));
-    setShowSearch(false);
-    
+    // Add the item's name to the text box
+    const itemName = item.name.replace(/_/g, ' ');
+    setPrompt(prevPrompt => {
+      // If the prompt is empty, just add the name
+      if (!prevPrompt.trim()) {
+        return itemName;
+      }
+      // If the prompt doesn't end with a space, add one
+      if (!prevPrompt.endsWith(' ')) {
+        return `${prevPrompt} ${itemName}`;
+      }
+      // Otherwise just append the name
+      return `${prevPrompt}${itemName}`;
+    });
+
     if (searchType === 'character') {
-      // Add character to selected list if not already there
       if (!selectedCharacters.find(c => c._id === item._id)) {
         setSelectedCharacters([...selectedCharacters, item]);
       }
     } else if (searchType === 'prop') {
-      // Add prop to selected list if not already there
       if (!selectedProps.find(p => p._id === item._id)) {
         setSelectedProps([...selectedProps, item]);
       }
+    } else if (searchType === 'scene') {
+      if (!selectedScenes.find(s => s._id === item._id)) {
+        console.log("Adding scene: ", item);
+        setSelectedScenes([item]);
+      }
     }
+    setShowSearchBar(false);
+    setSearchQuery('');
+    setSearchResults([]);
   };
 
   const generateImage = async () => {
@@ -140,12 +210,26 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
             characters: selectedCharacters.map(c => ({name : c.name, portraitUrl: c.image })),
           },
           props: selectedProps.map(p => ({name : p.name, imageUrl: p.image })),
+          scene: selectedScenes.length > 0 ? { name: selectedScenes[0].name, imageUrl: selectedScenes[0].image } : null
         });
         console.log(response.data);
         generatedImage = response.data.image;
         generatedText = response.data.text;
 
-      } else {
+      } else if(imageType === "scene"){
+        const response = await axios.post('/api/generate-image/scenes', {
+          name: " ",
+          description: prompt,
+          style: artisticStyle,
+        });
+        console.log(response.data);
+        generatedImage = response.data.image;
+        generatedText = response.data.text;
+        console.log(generatedImage);
+        console.log(generatedText);
+      }else {
+        console.log("Generating comic image");
+        console.log(selectedScenes);
         const response = await axios.post('/api/generate-image', {
           prompt,
           comic : {
@@ -153,6 +237,7 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
             style : artisticStyle,
             characters: selectedCharacters.map(c => ({name : c.name, portraitUrl: c.image })),
             props: selectedProps.map(p => ({name : p.name, portraitUrl: p.image })),
+            scene: selectedScenes.length > 0 ? { name: selectedScenes[0].name, imageUrl: selectedScenes[0].image } : null
           }
         });
         console.log(response.data);
@@ -180,6 +265,7 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
       // Clear selected items
       setSelectedCharacters([]);
       setSelectedProps([]);
+      setSelectedScenes([]);
       setPrompt('');
 
       // Convert base64 to blob
@@ -212,11 +298,11 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
   return (
     <div>
       {selectedImage ? (
-        <div className="relative group">
+        <div className="relative group w-48 h-48">
           <img
             src={selectedImage}
             alt="Selected"
-            className="w-48 h-48 object-cover rounded-lg"
+            className="w-full h-full object-cover rounded-lg"
           />
           <button
             onClick={() => {
@@ -269,31 +355,67 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
                 <textarea
                   value={prompt}
                   onChange={handlePromptChange}
-                  placeholder="Describe the image you want to generate... Use @ for characters and # for props"
+                  placeholder="Describe the image you want to generate..."
                   className="w-full h-32 p-3 border rounded-md"
                   rows={4}
                 />
-                {showSearch && searchResults.length > 0 && (
-                  <div className="absolute left-0 right-0 mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                    {searchResults.map((item) => (
-                      <div
-                        key={item._id}
-                        onClick={() => handleItemSelect(item)}
-                        className="p-2 hover:bg-gray-100 cursor-pointer flex items-center space-x-2"
-                      >
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-8 h-8 rounded-full object-cover"
-                        />
-                        <span>{item.name.replace(/_/g, ' ')}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
 
-              {(selectedCharacters.length > 0 || selectedProps.length > 0) && (
+              {/* Add Character/Prop/Scene Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleSearchTypeSelect('character')}
+                  className="flex-1 px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200"
+                >
+                  Add Character
+                </button>
+                <button
+                  onClick={() => handleSearchTypeSelect('prop')}
+                  className="flex-1 px-4 py-2 bg-green-100 text-green-700 rounded-md hover:bg-green-200"
+                >
+                  Add Prop
+                </button>
+                <button
+                  onClick={() => handleSearchTypeSelect('scene')}
+                  className="flex-1 px-4 py-2 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200"
+                >
+                  Add Scene
+                </button>
+              </div>
+
+              {/* Search Bar */}
+              {showSearchBar && (
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    placeholder={`Search ${searchType}s...`}
+                    className="w-full px-4 py-2 border rounded-md"
+                  />
+                  {showSearch && searchResults.length > 0 && (
+                    <div className="absolute left-0 right-0 mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto z-10">
+                      {searchResults.map((item) => (
+                        <div
+                          key={item._id}
+                          onClick={() => handleItemSelect(item)}
+                          className="p-2 hover:bg-gray-100 cursor-pointer flex items-center space-x-2"
+                        >
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                          <span>{item.name.replace(/_/g, ' ')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Selected Items Display */}
+              {(selectedCharacters.length > 0 || selectedProps.length > 0 || selectedScenes.length > 0) && (
                 <div className="space-y-2">
                   {selectedCharacters.length > 0 && (
                     <div className="flex flex-wrap gap-2">
@@ -329,6 +451,23 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
                       ))}
                     </div>
                   )}
+                  {selectedScenes.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedScenes.map((scene) => (
+                        <div
+                          key={scene._id}
+                          className="flex items-center space-x-1 bg-purple-100 px-2 py-1 rounded-full"
+                        >
+                          <img
+                            src={scene.image}
+                            alt={scene.name}
+                            className="w-4 h-4 rounded-full object-cover"
+                          />
+                          <span className="text-sm">{scene.name.replace(/_/g, ' ')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -356,11 +495,11 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
 
               {generatedImage && (
                 <div className="mt-4">
-                  <div className="relative">
+                  <div className="relative w-full" style={{ paddingBottom: '100%' }}>
                     <img
                       src={generatedImage}
                       alt="Generated"
-                      className="w-full rounded-lg"
+                      className="absolute inset-0 w-full h-full object-cover rounded-lg"
                     />
                     <button
                       onClick={handleUseImage}

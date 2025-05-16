@@ -16,6 +16,10 @@ interface IProps {
     function isAlive(uint256 tokenId) external view returns (bool);
 }
 
+interface IScenes {
+    function isAlive(uint256 tokenId) external view returns (bool);
+}
+
 contract Admin is Ownable {
     // Base fees
     uint256 public PROMPT_PRICE = 0.0 ether;
@@ -27,21 +31,24 @@ contract Admin is Ownable {
     address public immutable charactersAddress;
     address public immutable propsAddress;
     address public immutable comicsAddress;
+    address public immutable scenesAddress;
 
     event PromptPaid(address indexed user, uint256 amount);
     event ComicCreated(uint256 indexed comicId, address comicsAddress, string name);
-    event ContractsDeployed(address characters, address props, address comics);
+    event ContractsDeployed(address characters, address props, address comics, address scenes);
 
     constructor(
         address _charactersAddress,
         address _propsAddress,
-        address _comicsAddress
+        address _comicsAddress,
+        address _scenesAddress
     ) Ownable(msg.sender) {
         charactersAddress = _charactersAddress;
         propsAddress = _propsAddress;
         comicsAddress = _comicsAddress;
+        scenesAddress = _scenesAddress;
 
-        emit ContractsDeployed(_charactersAddress, _propsAddress, _comicsAddress);
+        emit ContractsDeployed(_charactersAddress, _propsAddress, _comicsAddress, _scenesAddress);
     }
 
     function getCharactersAddress() external view returns (address) {
@@ -54,6 +61,10 @@ contract Admin is Ownable {
 
     function getComicsAddress() external view returns (address) {
         return comicsAddress;
+    }
+
+    function getScenesAddress() external view returns (address) {
+        return scenesAddress;
     }
 
     function withdraw() public onlyOwner {

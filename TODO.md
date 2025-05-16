@@ -1,4 +1,5 @@
 - verify transactions before accepting
 - make sure all the post requests are signed by a wallet
-- add wallet connect/privy support
 - payout rewards
+- prev panel in strip creation
+- creating scenes

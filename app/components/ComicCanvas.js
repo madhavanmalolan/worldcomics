@@ -20,7 +20,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [image, setImage] = useState(initialImage);
   const [tool, setTool] = useState('select'); // 'select', 'bubble', 'pointer'
-  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
+  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 800 });
   const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0].value);
   const [isDraggingDiamond, setIsDraggingDiamond] = useState(false);
   const [resizeHandle, setResizeHandle] = useState(null); // 'nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'
@@ -666,18 +666,19 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
       {showCandidates ? (
         <CandidateGallery onSelect={handleCandidateSelect} />
       ) : image ? (
-        <canvas
-          ref={canvasRef}
-          width={canvasSize.width}
-          height={canvasSize.height}
-          className="border border-gray-300 w-full h-auto"
-          style={{ maxWidth: '100%', height: 'auto' }}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onDoubleClick={handleDoubleClick}
-        />
+        <div className="relative w-full" style={{ paddingBottom: '100%' }}>
+          <canvas
+            ref={canvasRef}
+            width={canvasSize.width}
+            height={canvasSize.height}
+            className="border border-gray-300 absolute inset-0 w-full h-full object-contain"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onDoubleClick={handleDoubleClick}
+          />
+        </div>
       ) : (
         <div className="border border-gray-300 p-4 rounded-lg">
           <ImageGenerator

@@ -120,7 +120,6 @@ Important details:
     const paths = await saveImageToFile(imageData, requestId, 'scene');
     
     return NextResponse.json({ 
-      scene: {
         id: requestId,
         name,
         description,
@@ -128,7 +127,6 @@ Important details:
         image: `data:image/png;base64,${imageData}`,
         imagePath: paths.imagePath,
         base64Path: paths.base64Path
-      }
     });
 
   } catch (error) {

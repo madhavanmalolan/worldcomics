@@ -764,8 +764,8 @@
       "artifacts": []
     },
     "/home/madhavan-focus/Hacks/worldcomics/contracts/Admin.sol": {
-      "lastModificationDate": 1746382851313,
-      "contentHash": "dbf45b56adff22da56b4b8af631566d8",
+      "lastModificationDate": 1747368381725,
+      "contentHash": "7c2fa9781164f1310aba4e4ed8116252",
       "sourceName": "contracts/Admin.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -801,7 +801,8 @@
         "Admin",
         "ICharacters",
         "IComics",
-        "IProps"
+        "IProps",
+        "IScenes"
       ]
     },
     "/home/madhavan-focus/Hacks/worldcomics/contracts/Comics.sol": {
@@ -964,6 +965,48 @@
       ],
       "artifacts": [
         "Props"
+      ]
+    },
+    "/home/madhavan-focus/Hacks/worldcomics/contracts/Scenes.sol": {
+      "lastModificationDate": 1747368259924,
+      "contentHash": "37c7e0bea60d5fa289a6f40512901fb5",
+      "sourceName": "contracts/Scenes.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC721/ERC721.sol",
+        "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol",
+        "@openzeppelin/contracts/access/Ownable.sol",
+        "@openzeppelin/contracts/utils/Strings.sol",
+        "@openzeppelin/contracts/utils/Base64.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "Scenes"
       ]
     }
   }
