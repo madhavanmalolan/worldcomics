@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ethers } from 'ethers';
 import contracts from '@/app/constants/contracts.json';
-import { scenes } from '@/app/constants/addresses.json';
+import addresses from '@/app/constants/addresses.json';
 import { getDatabase } from '@/app/lib/db';
 
 export async function POST(request) {
@@ -59,7 +59,7 @@ export async function POST(request) {
 
     // Create contract interface for decoding
     const scenesContract = new ethers.Contract(
-      scenes,
+      addresses.scenes,
       contracts.scenes.abi,
       provider
     );
@@ -69,7 +69,7 @@ export async function POST(request) {
       
       // Find the log from the Scenes contract
       const sceneLog = receipt.logs.find(log => 
-        log.address.toLowerCase() === scenes.toLowerCase()
+        log.address.toLowerCase() === addresses.scenes.toLowerCase()
       );
 
       if (!sceneLog) {
