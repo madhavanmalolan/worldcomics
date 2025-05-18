@@ -283,6 +283,8 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
         },
       });
 
+      console.log(uploadResponse.data);
+
       const imageUrl = uploadResponse.data.url;
       setSelectedImage(imageUrl);
       onImageSelected(imageUrl);
