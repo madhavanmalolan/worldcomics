@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getDatabase } from '@/app/lib/db';
 import { ethers } from 'ethers';
 import contracts from '@/app/constants/contracts.json';
-import { admin } from '@/app/constants/addresses.json';
+import addresses from '@/app/constants/addresses.json';
 
 export async function POST(request) {
   try {
@@ -53,7 +53,7 @@ export async function GET(request, { params }) {
     
     // Get Comics contract address from Admin
     const adminContract = new ethers.Contract(
-      admin,
+      addresses.admin,
       contracts.admin.abi,
       provider
     );

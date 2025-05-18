@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import OpenAI from 'openai';
 
 const openai = new OpenAI({

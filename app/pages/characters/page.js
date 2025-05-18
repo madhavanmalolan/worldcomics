@@ -5,7 +5,7 @@ import ImageGenerator from '@/app/components/ImageGenerator';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseEther } from 'viem';
 import contracts from '@/app/constants/contracts.json';
-import { admin } from '@/app/constants/addresses.json';
+import addresses from '@/app/constants/addresses.json';
 import axios from 'axios';
 
 export default function CharactersPage() {
@@ -18,7 +18,7 @@ export default function CharactersPage() {
   const { address, isConnected } = useAccount();
 
   // Get Characters contract address from Admin
-  const adminAddress = admin;
+  const adminAddress = addresses.admin;
   console.log('Admin Address:', adminAddress);
 
   const { data: charactersAddress, isLoading: isLoadingAddress, error: addressError } = useReadContract({

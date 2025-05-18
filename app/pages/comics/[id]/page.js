@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useAccount, useReadContract, useWriteContract } from 'wagmi';
 import { ethers } from 'ethers';
 import contracts from '@/app/constants/contracts.json';
-import { admin } from '@/app/constants/addresses.json';
+import addresses from '@/app/constants/addresses.json';
 
 export default function Feed() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -28,7 +28,7 @@ export default function Feed() {
 
   // Get Comics contract address from Admin
   const { data: comicsAddress } = useReadContract({
-    address: admin,
+    address: addresses.admin,
     abi: contracts.admin.abi,
     functionName: 'getComicsAddress',
   });

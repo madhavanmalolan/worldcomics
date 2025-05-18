@@ -5,7 +5,7 @@ import ImageGenerator from '@/app/components/ImageGenerator';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseEther } from 'viem';
 import contracts from '@/app/constants/contracts.json';
-import { admin } from '@/app/constants/addresses.json';
+import addresses from '@/app/constants/addresses.json';
 import axios from 'axios';
 
 export default function PropsPage() {
@@ -18,7 +18,7 @@ export default function PropsPage() {
   const { address, isConnected } = useAccount();
 
   // Get Props contract address from Admin
-  const adminAddress = admin;
+  const adminAddress = addresses.admin;
 
   const { data: propsAddress, isLoading: isLoadingAddress, error: addressError } = useReadContract({
     address: adminAddress,

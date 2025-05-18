@@ -5,7 +5,7 @@ import ImageGenerator from '@/app/components/ImageGenerator';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
 import { parseEther } from 'viem';
 import contracts from '@/app/constants/contracts.json';
-import { admin } from '@/app/constants/addresses.json';
+import addresses from '@/app/constants/addresses.json';
 import axios from 'axios';
 import { ethers } from 'ethers';
 import { useRouter } from 'next/navigation';
@@ -23,7 +23,7 @@ export default function CreateComicPage() {
   const router = useRouter();
 
   // Get Comics contract address from Admin
-  const adminAddress = admin;
+  const adminAddress = addresses.admin;
 
   const { data: comicsAddress, isLoading: isLoadingAddress, error: addressError } = useReadContract({
     address: adminAddress,
