@@ -174,7 +174,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
     // Draw selection bounding box and resize handles if bubble is selected
     if (bubble === selectedElement) {
       const padding = 5;
-      const handleSize = 24;
+      const handleSize = 48;
       const boxX = bubble.x - bubble.width / 2 - padding;
       const boxY = bubble.y - bubble.height / 2 - padding;
       const boxWidth = bubble.width + padding * 2;
@@ -185,7 +185,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
       ctx.lineWidth = 2;
       ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
 
-      // Draw resize handles
+      // Draw resize handles with larger visual indicators
       const handles = [
         { x: boxX, y: boxY, type: 'nw' },
         { x: boxX + boxWidth / 2, y: boxY, type: 'n' },
@@ -198,20 +198,31 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
       ];
 
       handles.forEach(handle => {
-        ctx.fillStyle = 'white';
-        ctx.strokeStyle = 'rgba(173, 216, 230, 0.8)';
-        ctx.lineWidth = 2;
+        // Draw a larger touch target area (invisible but active)
+        ctx.fillStyle = 'rgba(173, 216, 230, 0.1)'; // Very light blue
         ctx.fillRect(
           handle.x - handleSize / 2,
           handle.y - handleSize / 2,
           handleSize,
           handleSize
         );
+
+        // Draw the visible handle indicator
+        ctx.fillStyle = 'white';
+        ctx.strokeStyle = 'rgba(173, 216, 230, 0.8)';
+        ctx.lineWidth = 2;
+        const visibleSize = 16; // Smaller visible indicator
+        ctx.fillRect(
+          handle.x - visibleSize / 2,
+          handle.y - visibleSize / 2,
+          visibleSize,
+          visibleSize
+        );
         ctx.strokeRect(
-          handle.x - handleSize / 2,
-          handle.y - handleSize / 2,
-          handleSize,
-          handleSize
+          handle.x - visibleSize / 2,
+          handle.y - visibleSize / 2,
+          visibleSize,
+          visibleSize
         );
       });
     }
@@ -553,7 +564,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
     }
   };
 
-  const handleDoubleClick = (e) => {
+  const handleEditText = () => {
     if (selectedElement && selectedElement.type === 'bubble') {
       const newText = prompt('Enter dialogue text:', selectedElement.text);
       if (newText !== null) {
@@ -609,7 +620,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
       // Check if touching a diamond first
       if (selectedElement && selectedElement.type === 'bubble') {
         const diamondPos = getDiamondPosition(selectedElement);
-        if (isPointInDiamond(x, y, diamondPos.x, diamondPos.y, 16)) {
+        if (isPointInDiamond(x, y, diamondPos.x, diamondPos.y, 32)) {
           setIsDraggingDiamond(true);
           setIsDragging(true);
           setDragStart({ x, y });
@@ -618,7 +629,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
 
         // Check if touching a resize handle
         const padding = 5;
-        const handleSize = 24;
+        const handleSize = 48;
         const boxX = selectedElement.x - selectedElement.width / 2 - padding;
         const boxY = selectedElement.y - selectedElement.height / 2 - padding;
         const boxWidth = selectedElement.width + padding * 2;
@@ -809,67 +820,96 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex gap-2 flex-wrap">
-        <button
-          className={`px-4 py-2 rounded ${
-            tool === 'select' ? 'bg-blue-500 text-white' : 'bg-gray-200'
-          }`}
-          onClick={() => setTool('select')}
-        >
-          Select
-        </button>
-        <button
-          className={`px-4 py-2 rounded ${
-            tool === 'bubble' ? 'bg-blue-500 text-white' : 'bg-gray-200'
-          }`}
-          onClick={() => setTool('bubble')}
-        >
-          Add Dialogue
-        </button>
-        <select
-          value={selectedFont}
-          onChange={handleFontChange}
-          className="px-4 py-2 rounded bg-gray-200"
-        >
-          {FONT_OPTIONS.map(font => (
-            <option key={font.value} value={font.value}>
-              {font.name}
-            </option>
-          ))}
-        </select>
-        <button
-          className="px-4 py-2 rounded bg-red-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={handleDelete}
-          disabled={!selectedElement}
-        >
-          Delete
-        </button>
-        <button
-          className="px-4 py-2 rounded bg-green-500 text-white"
-          onClick={handleSave}
-        >
-          Save
-        </button>
-        <div className="flex items-center gap-2">
-          <button
-            className="px-2 py-1 rounded bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={() => handleFontSizeChange(-2)}
-            disabled={!selectedElement || selectedElement.type !== 'bubble'}
-          >
-            A-
-          </button>
-          <span className="text-sm">
-            {selectedElement?.type === 'bubble' ? (selectedElement.fontSize || selectedFontSize) : selectedFontSize}px
-          </span>
-          <button
-            className="px-2 py-1 rounded bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={() => handleFontSizeChange(2)}
-            disabled={!selectedElement || selectedElement.type !== 'bubble'}
-          >
-            A+
-          </button>
+      <div className="flex flex-col gap-4">
+        {/* Dialog Bubbles Section */}
+        <div className="flex flex-col gap-2">
+          <h3 className="text-sm font-medium text-gray-700">Dialog Bubbles</h3>
+          <div className="flex gap-2">
+            <button
+              className={`px-4 py-2 rounded ${
+                tool === 'select' ? 'bg-blue-500 text-white' : 'bg-gray-200'
+              }`}
+              onClick={() => setTool('select')}
+            >
+              Select Dialog
+            </button>
+            <button
+              className={`px-4 py-2 rounded ${
+                tool === 'bubble' ? 'bg-blue-500 text-white' : 'bg-gray-200'
+              }`}
+              onClick={() => setTool('bubble')}
+            >
+              Add Dialog
+            </button>
+            <button
+              className="px-4 py-2 rounded bg-red-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleDelete}
+              disabled={!selectedElement}
+            >
+              Delete Dialog
+            </button>
+          </div>
+        </div>
+
+        {/* Text Section */}
+        <div className="flex flex-col gap-2">
+          <h3 className="text-sm font-medium text-gray-700">Text</h3>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              className="px-4 py-2 rounded bg-blue-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleEditText}
+              disabled={!selectedElement || selectedElement.type !== 'bubble'}
+            >
+              Change Text
+            </button>
+            <select
+              value={selectedFont}
+              onChange={handleFontChange}
+              className="px-4 py-2 rounded bg-gray-200"
+              disabled={!selectedElement || selectedElement.type !== 'bubble'}
+            >
+              {FONT_OPTIONS.map(font => (
+                <option key={font.value} value={font.value}>
+                  {font.name}
+                </option>
+              ))}
+            </select>
+            <div className="flex items-center gap-2">
+              <button
+                className="px-2 py-1 rounded bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => handleFontSizeChange(-2)}
+                disabled={!selectedElement || selectedElement.type !== 'bubble'}
+              >
+                A-
+              </button>
+              <span className="text-sm">
+                {selectedElement?.type === 'bubble' ? (selectedElement.fontSize || selectedFontSize) : selectedFontSize}px
+              </span>
+              <button
+                className="px-2 py-1 rounded bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => handleFontSizeChange(2)}
+                disabled={!selectedElement || selectedElement.type !== 'bubble'}
+              >
+                A+
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Save Section */}
+        <div className="flex flex-col gap-2">
+          <h3 className="text-sm font-medium text-gray-700">Save</h3>
+          <div className="flex gap-2">
+            <button
+              className="px-4 py-2 rounded bg-green-500 text-white"
+              onClick={handleSave}
+            >
+              Save Comic
+            </button>
+          </div>
         </div>
       </div>
+
       {showCandidates ? (
         <CandidateGallery onSelect={handleCandidateSelect} />
       ) : image ? (
@@ -883,7 +923,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
-            onDoubleClick={handleDoubleClick}
+            onDoubleClick={handleEditText}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
