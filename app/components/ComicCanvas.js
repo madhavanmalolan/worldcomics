@@ -629,7 +629,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
 
         // Check if touching a resize handle
         const padding = 5;
-        const handleSize = tool === 'resize' ? 48 : 8;
+        const handleSize = tool === 'resize' ? 32 : 4;
         const boxX = selectedElement.x - selectedElement.width / 2 - padding;
         const boxY = selectedElement.y - selectedElement.height / 2 - padding;
         const boxWidth = selectedElement.width + padding * 2;
