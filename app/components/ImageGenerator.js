@@ -6,6 +6,11 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagm
 import { ethers } from 'ethers';
 import { CONTRACT_ADDRESS, CONTRACT_ABI, IMAGE_GENERATION_PRICE } from '@/app/constants/contract';
 
+// Create axios instance with 5-minute timeout for image generation APIs
+const imageGenApi = axios.create({
+  timeout: 5 * 60 * 1000, // 5 minutes in milliseconds
+});
+
 export default function ImageGenerator({ onImageSelected, currentImage, artisticStyle, imageType }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [prompt, setPrompt] = useState('');
@@ -182,7 +187,7 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
       let generatedText = null;
       if(imageType === "character"){
         console.log("Generating character image");
-        const response = await axios.post('/api/generate-image/characters', {
+        const response = await imageGenApi.post('/api/generate-image/characters', {
           name: " ",
           description: prompt,
           style: artisticStyle,
@@ -191,7 +196,7 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
         generatedImage = response.data.character.image;
         generatedText = "";
       } else if(imageType === "prop") {
-        const response = await axios.post('/api/generate-image/props', {
+        const response = await imageGenApi.post('/api/generate-image/props', {
           name: " ",
           description: prompt,
           style: artisticStyle,
@@ -202,7 +207,7 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
 
       } else if(imageType === "comic"){
         console.log("Selected props: ", selectedProps);
-        const response = await axios.post('/api/generate-image', {
+        const response = await imageGenApi.post('/api/generate-image', {
           prompt,
           comic : {
             name : "",
@@ -217,7 +222,7 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
         generatedText = response.data.text;
 
       } else if(imageType === "scene"){
-        const response = await axios.post('/api/generate-image/scenes', {
+        const response = await imageGenApi.post('/api/generate-image/scenes', {
           name: " ",
           description: prompt,
           style: artisticStyle,
@@ -230,7 +235,7 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
       }else {
         console.log("Generating comic image");
         console.log(selectedScenes);
-        const response = await axios.post('/api/generate-image', {
+        const response = await imageGenApi.post('/api/generate-image', {
           prompt,
           comic : {
             name : "",
