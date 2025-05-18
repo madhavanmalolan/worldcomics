@@ -7,6 +7,7 @@ import { parseEther } from 'viem';
 import contracts from '@/app/constants/contracts.json';
 import addresses from '@/app/constants/addresses.json';
 import axios from 'axios';
+import Image from 'next/image';
 
 export default function CharactersPage() {
   const [characterName, setCharacterName] = useState('');
@@ -246,11 +247,14 @@ export default function CharactersPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {characters.map((character) => (
               <div key={character._id} className="bg-gray-50 rounded-lg overflow-hidden shadow-sm">
-                <img 
-                  src={character.image} 
-                  alt={character.name}
-                  className="w-full h-48 object-cover"
-                />
+                <div className="relative w-full h-48">
+                  <Image 
+                    src={character.image} 
+                    alt={character.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
                 <div className="p-4">
                   <h3 className="text-lg font-semibold text-gray-900">
                     {character.name.replace(/_/g, ' ')}

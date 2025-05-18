@@ -7,6 +7,7 @@ import { parseEther } from 'viem';
 import contracts from '@/app/constants/contracts.json';
 import addresses from '@/app/constants/addresses.json';
 import axios from 'axios';
+import Image from 'next/image';
 
 export default function ScenesPage() {
   const [sceneName, setSceneName] = useState('');
@@ -241,11 +242,14 @@ export default function ScenesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {scenes.map((scene) => (
               <div key={scene._id} className="bg-gray-50 rounded-lg overflow-hidden shadow-sm">
-                <img 
-                  src={scene.image} 
-                  alt={scene.name}
-                  className="w-full h-48 object-cover"
-                />
+                <div className="relative w-full h-48">
+                  <Image 
+                    src={scene.image} 
+                    alt={scene.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
                 <div className="p-4">
                   <h3 className="text-lg font-semibold text-gray-900">{scene.name}</h3>
                   <p className="text-sm text-gray-500">Style: {scene.artisticStyle}</p>

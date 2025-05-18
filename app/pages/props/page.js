@@ -7,6 +7,7 @@ import { parseEther } from 'viem';
 import contracts from '@/app/constants/contracts.json';
 import addresses from '@/app/constants/addresses.json';
 import axios from 'axios';
+import Image from 'next/image';
 
 export default function PropsPage() {
   const [propName, setPropName] = useState('');
@@ -243,11 +244,14 @@ export default function PropsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {props.map((prop) => (
               <div key={prop._id} className="bg-gray-50 rounded-lg overflow-hidden shadow-sm">
-                <img 
-                  src={prop.image} 
-                  alt={prop.name}
-                  className="w-full h-48 object-cover"
-                />
+                <div className="relative w-full h-48">
+                  <Image 
+                    src={prop.image} 
+                    alt={prop.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
                 <div className="p-4">
                   <h3 className="text-lg font-semibold text-gray-900">
                     {prop.name.replace(/_/g, ' ')}
