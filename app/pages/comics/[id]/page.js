@@ -183,6 +183,8 @@ export default function Feed() {
 
   const loadCandidates = async () => {
     try {
+      setIsLoading(true);
+
       console.log("comicId", comicId);
       const response = await fetch(`/api/comics/${comicId}/candidates`);
       const data = await response.json();
@@ -193,6 +195,8 @@ export default function Feed() {
       console.log("strips", strips);
     } catch (error) {
       console.error('Error loading candidates:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 

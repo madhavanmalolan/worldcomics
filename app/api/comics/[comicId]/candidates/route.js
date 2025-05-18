@@ -9,11 +9,130 @@ export async function POST(request) {
     const formData = await request.formData();
     const imageUrls = formData.getAll('imageUrls');
     const elements = JSON.parse(formData.get('elements'));
+    const stripId = formData.get('stripId');
+    const comicId = formData.get('comicId');
+    const txHash = formData.get('txHash');
 
     if (!imageUrls || imageUrls.length === 0) {
       return NextResponse.json({ error: 'No images provided' }, { status: 400 });
     }
 
+    if (!txHash) {
+      return NextResponse.json({ error: 'Transaction hash is required' }, { status: 400 });
+    }
+
+    // Initialize provider
+    const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL);
+    
+    // Wait for transaction to be confirmed
+    let receipt;
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    while (attempts < maxAttempts) {
+      receipt = await provider.getTransactionReceipt(txHash);
+      if (receipt) {
+        break;
+      }
+      await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds between attempts
+      attempts++;
+    }
+
+    if (!receipt) {
+      console.log('Transaction not found or not confirmed');
+      return NextResponse.json(
+        { error: 'Transaction not found or not confirmed' },
+        { status: 404 }
+      );
+    }
+
+    if (!receipt.status) {
+      console.log('Transaction failed');
+      return NextResponse.json(
+        { error: 'Transaction failed' },
+        { status: 400 }
+      );
+    }
+
+    // Check if transaction is within last 24 minutes
+    const tx = await provider.getTransaction(txHash);
+ 
+    // Get Comics contract address from Admin
+    const adminContract = new ethers.Contract(
+      addresses.admin,
+      contracts.admin.abi,
+      provider
+    );
+    const comicsAddress = await adminContract.getComicsAddress();
+
+    // Create contract interface for decoding
+    const comicsContract = new ethers.Contract(
+      comicsAddress,
+      contracts.comics.abi,
+      provider
+    );
+
+    try {
+      console.log('\n=== Transaction Details ===');
+      console.log('Transaction hash:', tx.hash);
+      console.log('From:', tx.from);
+      console.log('To:', tx.to);
+      console.log('Data:', tx.data);
+      console.log('Value:', tx.value.toString());
+
+      console.log('\n=== All Events ===');
+      let stripCreatedEvent = null;
+      
+      for (const log of receipt.logs) {
+        console.log('\nEvent Log:');
+        console.log('Address:', log.address);
+        console.log('Topics:', log.topics);
+        console.log('Data:', log.data);
+        
+        // Try to decode the event using the comics contract interface
+        try {
+          const decodedLog = comicsContract.interface.parseLog({
+            topics: log.topics,
+            data: log.data
+          });
+          console.log('Decoded Event:', decodedLog);
+          
+          // Check if this is the StripCreated event
+          if (decodedLog.name === 'StripCreated') {
+            stripCreatedEvent = decodedLog;
+          }
+        } catch (e) {
+          console.log('Could not decode with comics contract interface');
+        }
+      }
+
+      if (!stripCreatedEvent) {
+        console.log('No StripCreated event found');
+        return NextResponse.json(
+          { error: 'No StripCreated event found' },
+          { status: 400 }
+        );
+      }
+
+      // Verify the StripCreated event parameters
+      // StripCreated(uint256 stripId, uint256 comicId, address creator, uint256 day)
+      const [eventStripId, eventComicId, eventCreator, eventDay] = stripCreatedEvent.args;
+      
+      if (eventStripId !== BigInt(stripId)) {
+        console.log('Strip ID does not match');
+        return NextResponse.json(
+          { error: 'Strip ID does not match' },
+          { status: 400 }
+        );
+      }
+    } catch (error) {
+      console.error('Error decoding transaction:', error);
+      return NextResponse.json(
+        { error: 'Invalid transaction data' },
+        { status: 400 }
+      );
+    }
+    
     // Get database connection
     const db = await getDatabase();
 
