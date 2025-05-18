@@ -176,6 +176,14 @@ contract Comics is ERC721URIStorage, Ownable {
         return comics[comicId];
     }
 
+    function getVoteThreshold(uint256 day) public view returns (uint256) {
+        uint256 voteThreshold = BASE_STRIP_FEE * 1e18;
+        for(uint256 i = 0; i < day; i++) {
+            voteThreshold *= BASE_STRIP_FEE / 1e18;
+        }
+        return voteThreshold;
+    }
+
     function vote(uint256 stripId) external payable {
         require(strips[stripId].createdAt > 0, "Strip does not exist");
         
@@ -190,12 +198,8 @@ contract Comics is ERC721URIStorage, Ownable {
             emit StripDonated(stripId, msg.value);
         }
 
-        uint256 voteThreshold = BASE_STRIP_FEE * 1e18 ;
-        for(uint256 i = 0; i < currentDay; i++){
-            voteThreshold *= BASE_STRIP_FEE / 1e18;
-        }
-        if(strips[stripId].voteCount >= voteThreshold) {
-            currentStripDay[comicId] ++;
+        if(strips[stripId].voteCount >= getVoteThreshold(currentDay)) {
+            currentStripDay[comicId]++;
             emit StripFrozen(comicId, stripId, currentStripDay[comicId]);
         }
 

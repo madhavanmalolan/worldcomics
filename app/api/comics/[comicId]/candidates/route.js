@@ -68,33 +68,15 @@ export async function GET(request, { params }) {
     const currentDay = await comicsContract.getCurrentDay(comicId);
     console.log("comicId", comicId, "currentDay", currentDay.toString());
 
+    // Get vote threshold for current day
+    const voteThreshold = await comicsContract.getVoteThreshold(currentDay);
+
     // Get all candidates for this comic
     const candidates = await db.collection('candidates'+ process.env.DATABASE_VERSION)
       .find({ comicId: comicId })
       .sort({ createdAt: -1 })
       .toArray();
     console.log("All candidates:", candidates);
-
-    const dayCandidates = [];
-    const strips = [];
-    for( let i = 0; i < currentDay; i++) {
-      const dayCandidates = candidates.filter(candidate => candidate.day === i.toString());
-      console.log("dayCandidates", dayCandidates);
-      let maxVotes = 0; 
-      let maxVotedCandidate = null;
-      for( let j = 0; j < dayCandidates.length; j++) {
-        const candidate = dayCandidates[j];
-        console.log("candidate", candidate);
-        // get votes for candidate
-        const votes = await comicsContract.getVoteCount(candidate.stripId);
-        if(votes >= maxVotes) {
-          maxVotes = votes;
-          maxVotedCandidate = candidate;
-        }
-      }
-      console.log("maxVotedCandidate", maxVotedCandidate);
-      strips.push(maxVotedCandidate);
-    }
 
     // Filter candidates for current day
     const currentDayCandidates = candidates.filter(candidate => 
@@ -104,9 +86,60 @@ export async function GET(request, { params }) {
     );
     console.log("Filtered candidates:", currentDayCandidates);
 
+    // Get vote counts for current day candidates
+    const candidatesWithVotes = await Promise.all(
+      currentDayCandidates.map(async (candidate) => {
+        const voteCount = await comicsContract.getVoteCount(candidate.stripId);
+        return {
+          ...candidate,
+          voteCount: voteCount.toString(),
+          voteThreshold: voteThreshold.toString(),
+        };
+      })
+    );
+
+    // Get winning strips for previous days from database
+    const winningStrips = await Promise.all(
+      Array.from({ length: Number(currentDay) }, (_, i) => i).map(async (day) => {
+        // Get all candidates for this day
+        const dayCandidates = candidates.filter(candidate => 
+          candidate.imageUrls && 
+          candidate.imageUrls.length > 0 && 
+          candidate.day === day.toString()
+        );
+
+        if (dayCandidates.length > 0) {
+          // Get vote counts for all candidates of this day
+          const candidatesWithVotes = await Promise.all(
+            dayCandidates.map(async (candidate) => {
+              const voteCount = await comicsContract.getVoteCount(candidate.stripId);
+              return {
+                ...candidate,
+                voteCount: voteCount.toString(),
+              };
+            })
+          );
+
+          // Find the candidate with highest votes
+          const winningCandidate = candidatesWithVotes.reduce((prev, current) => 
+            Number(current.voteCount) > Number(prev.voteCount) ? current : prev
+          );
+
+          return {
+            stripId: winningCandidate.stripId,
+            day,
+            imageUrls: winningCandidate.imageUrls,
+            voteCount: winningCandidate.voteCount,
+            createdAt: winningCandidate.createdAt,
+          };
+        }
+        return null;
+      })
+    );
+
     return NextResponse.json({
-      candidates: currentDayCandidates,
-      strips: strips
+      candidates: candidatesWithVotes,
+      strips: winningStrips.filter(Boolean),
     });
   } catch (error) {
     console.error('Error fetching candidates:', error);

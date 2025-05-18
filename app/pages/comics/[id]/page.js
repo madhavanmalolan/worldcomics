@@ -4,7 +4,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useSwipeable } from 'react-swipeable'; // You'll need to install this package
 import ComicCanvas from '@/app/components/ComicCanvas';
 import Link from 'next/link';
-import { useAccount, useReadContract, useWriteContract } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract, readContract } from 'wagmi';
 import { ethers } from 'ethers';
 import contracts from '@/app/constants/contracts.json';
 import addresses from '@/app/constants/addresses.json';
@@ -33,13 +33,22 @@ export default function Feed() {
     functionName: 'getComicsAddress',
   });
 
-  // Get vote counts for all candidates
-  const { data: voteCounts } = useReadContract({
+  // Get current day for the comic
+  const { data: currentDay } = useReadContract({
     address: comicsAddress,
     abi: contracts.comics.abi,
-    functionName: 'getVoteCount',
-    args: [candidates.map(c => c.stripId)],
-    enabled: candidates.length > 0,
+    functionName: 'getCurrentDay',
+    args: [comicId],
+    enabled: !!comicsAddress && !!comicId,
+  });
+
+  // Get vote threshold for current day
+  const { data: voteThreshold } = useReadContract({
+    address: comicsAddress,
+    abi: contracts.comics.abi,
+    functionName: 'getVoteThreshold',
+    args: [currentDay],
+    enabled: !!comicsAddress && currentDay !== undefined,
   });
 
   useEffect(() => {
@@ -193,7 +202,97 @@ export default function Feed() {
       alert('Failed to vote. Please try again.');
     } finally {
       setIsVoting(prev => ({ ...prev, [stripId]: false }));
+      router.refresh();
     }
+  };
+
+  // Component for displaying a single candidate
+  const CandidateCard = ({ candidate, index }) => {
+    return (
+      <div className="bg-white p-4 rounded-lg shadow">
+        <div className="flex justify-center w-full">
+          <div className="flex gap-4 w-full">
+            {candidate.imageUrls.map((imageUrl, imgIndex) => (
+              <div 
+                key={imgIndex} 
+                className="flex-1 aspect-square min-w-0"
+              >
+                <img
+                  src={imageUrl}
+                  alt={`Strip ${index + 1} Panel ${imgIndex + 1}`}
+                  className="w-full h-full object-cover rounded-md"
+                />
+              </div>
+            ))}
+            {Array.from({ length: 4 - candidate.imageUrls.length }).map((_, i) => (
+              <div key={`empty-${i}`} className="flex-1" />
+            ))}
+          </div>
+        </div>
+        <div className="mt-4 flex items-center justify-between">
+          <div className="text-sm text-gray-500">
+            Created {new Date(candidate.createdAt).toLocaleDateString()}
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => adjustVoteAmount(candidate.stripId, -0.01)}
+                className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
+              >
+                -
+              </button>
+              <input
+                type="number"
+                value={voteAmounts[candidate.stripId] || '0.01'}
+                onChange={(e) => handleVoteAmountChange(candidate.stripId, e.target.value)}
+                min="0"
+                step="0.01"
+                className="w-20 px-2 py-1 border rounded text-right"
+              />
+              <button
+                onClick={() => adjustVoteAmount(candidate.stripId, 0.01)}
+                className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
+              >
+                +
+              </button>
+              <span className="text-sm text-gray-600">ETH</span>
+            </div>
+            <button
+              onClick={() => handleVote(candidate.stripId)}
+              disabled={isVoting[candidate.stripId] || !isConnected}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isVoting[candidate.stripId] ? 'Voting...' : 'Vote'}
+            </button>
+          </div>
+        </div>
+        <div className="mt-2 space-y-2">
+          {isLoading ? (
+            <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+              <div className="animate-shimmer h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200" />
+            </div>
+          ) : candidate.voteCount && candidate.voteThreshold ? (
+            <>
+              <div className="text-sm text-gray-600">
+                Current votes: {ethers.formatEther(candidate.voteCount)} ETH
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div 
+                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                  style={{ 
+                    width: `${Math.min(100, (Number(candidate.voteCount) / Number(candidate.voteThreshold)) * 100)}%` 
+                  }}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>0 ETH</span>
+                <span>{ethers.formatEther(candidate.voteThreshold)} ETH</span>
+              </div>
+            </>
+          ) : null}
+        </div>
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -259,69 +358,7 @@ export default function Feed() {
         {candidates && candidates.length > 0 ? (
           <div className="mt-4 space-y-8">
             {candidates.map((candidate, index) => (
-              <div key={index} className="bg-white p-4 rounded-lg shadow">
-                <div className="flex justify-center w-full">
-                  <div className="flex gap-4 w-full">
-                    {candidate.imageUrls.map((imageUrl, imgIndex) => (
-                      <div 
-                        key={imgIndex} 
-                        className="flex-1 aspect-square min-w-0"
-                      >
-                        <img
-                          src={imageUrl}
-                          alt={`Strip ${index + 1} Panel ${imgIndex + 1}`}
-                          className="w-full h-full object-cover rounded-md"
-                        />
-                      </div>
-                    ))}
-                    {Array.from({ length: 4 - candidate.imageUrls.length }).map((_, i) => (
-                      <div key={`empty-${i}`} className="flex-1" />
-                    ))}
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="text-sm text-gray-500">
-                    Created {new Date(candidate.createdAt).toLocaleDateString()}
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => adjustVoteAmount(candidate.stripId, -0.01)}
-                        className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                      >
-                        -
-                      </button>
-                      <input
-                        type="number"
-                        value={voteAmounts[candidate.stripId] || '0.01'}
-                        onChange={(e) => handleVoteAmountChange(candidate.stripId, e.target.value)}
-                        min="0"
-                        step="0.01"
-                        className="w-20 px-2 py-1 border rounded text-right"
-                      />
-                      <button
-                        onClick={() => adjustVoteAmount(candidate.stripId, 0.01)}
-                        className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                      >
-                        +
-                      </button>
-                      <span className="text-sm text-gray-600">ETH</span>
-                    </div>
-                    <button
-                      onClick={() => handleVote(candidate.stripId)}
-                      disabled={isVoting[candidate.stripId] || !isConnected}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isVoting[candidate.stripId] ? 'Voting...' : 'Vote'}
-                    </button>
-                  </div>
-                </div>
-                {voteCounts && voteCounts[index] && (
-                  <div className="mt-2 text-sm text-gray-600">
-                    Current votes: {ethers.formatEther(voteCounts[index])} ETH
-                  </div>
-                )}
-              </div>
+              <CandidateCard key={index} candidate={candidate} index={index} />
             ))}
           </div>
         ) : (

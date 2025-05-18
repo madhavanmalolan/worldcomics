@@ -806,8 +806,8 @@
       ]
     },
     "/home/madhavan-focus/Hacks/worldcomics/contracts/Comics.sol": {
-      "lastModificationDate": 1746411578648,
-      "contentHash": "d510200a5aa636a163f08b362bc02890",
+      "lastModificationDate": 1747585682860,
+      "contentHash": "1e5dbde49ee2edad7dd7d94297e55dca",
       "sourceName": "contracts/Comics.sol",
       "solcConfig": {
         "version": "0.8.20",

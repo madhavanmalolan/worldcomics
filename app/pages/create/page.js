@@ -52,11 +52,7 @@ export default function CreateComicPage() {
 
   const handleNameChange = (e) => {
     const value = e.target.value;
-    const formattedName = value
-      .toLowerCase()
-      .replace(/[^a-z\s]/g, '')
-      .replace(/\s+/g, '_');
-    setComicName(formattedName);
+    setComicName(value);
   };
 
   const handleCreateComic = async () => {
@@ -183,9 +179,6 @@ export default function CreateComicPage() {
                 placeholder="Enter comic name"
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               />
-              <p className="mt-1 text-sm text-gray-500">
-                Name will be converted to lowercase with underscores (e.g., "super_hero_adventures")
-              </p>
             </div>
 
             {/* Artistic Style Input */}
