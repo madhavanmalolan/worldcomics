@@ -174,7 +174,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
     // Draw selection bounding box and resize handles if bubble is selected
     if (bubble === selectedElement) {
       const padding = 5;
-      const handleSize = 8;
+      const handleSize = 24;
       const boxX = bubble.x - bubble.width / 2 - padding;
       const boxY = bubble.y - bubble.height / 2 - padding;
       const boxWidth = bubble.width + padding * 2;
@@ -609,7 +609,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
       // Check if touching a diamond first
       if (selectedElement && selectedElement.type === 'bubble') {
         const diamondPos = getDiamondPosition(selectedElement);
-        if (isPointInDiamond(x, y, diamondPos.x, diamondPos.y, 8)) {
+        if (isPointInDiamond(x, y, diamondPos.x, diamondPos.y, 16)) {
           setIsDraggingDiamond(true);
           setIsDragging(true);
           setDragStart({ x, y });
@@ -618,7 +618,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
 
         // Check if touching a resize handle
         const padding = 5;
-        const handleSize = 8;
+        const handleSize = 24;
         const boxX = selectedElement.x - selectedElement.width / 2 - padding;
         const boxY = selectedElement.y - selectedElement.height / 2 - padding;
         const boxWidth = selectedElement.width + padding * 2;
@@ -788,6 +788,20 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
 
   const handleTouchEnd = (e) => {
     e.preventDefault();
+    
+    // Handle double tap
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300; // 300ms between taps
+    
+    if (now - lastTap < DOUBLE_TAP_DELAY && selectedElement && selectedElement.type === 'bubble') {
+      const newText = prompt('Enter dialogue text:', selectedElement.text);
+      if (newText !== null) {
+        selectedElement.text = newText;
+        setElements([...elements]);
+      }
+    }
+    
+    setLastTap(now);
     setIsDragging(false);
     setIsDraggingDiamond(false);
     setResizeHandle(null);

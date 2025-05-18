@@ -141,6 +141,7 @@ export default function CreateComicPage() {
       setComicName('');
       setComicImage('');
       setArtisticStyle('');
+      router.push(`/comics/${comicId}`);
     } catch (error) {
       console.error('Error creating comic:', error);
       alert('Failed to create comic. Please try again.');
