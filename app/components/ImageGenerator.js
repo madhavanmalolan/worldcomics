@@ -362,7 +362,7 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
               </div>
 
               {/* Add Character/Prop/Scene Buttons */}
-              { imageType != "comic" && imageType != "scene" && imageType != "prop" && (
+              { imageType != "character" && imageType != "scene" && imageType != "prop" && (
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleSearchTypeSelect('character')}
