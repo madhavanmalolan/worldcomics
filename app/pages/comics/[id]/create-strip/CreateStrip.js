@@ -215,30 +215,32 @@ export default function CreateStrip({ comicId }) {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
         {images.map((imageUrl, index) => (
-          <div key={index} className="relative group">
+          <div key={index} className="relative">
             {imageUrl ? (
-              <div className="relative">
+              <div className="flex flex-col items-start">
                 <img
                   src={imageUrl}
                   alt={`Strip image ${index + 1}`}
-                  className="w-full h-64 object-cover rounded-lg"
+                  className="w-64 h-64 object-cover rounded-lg"
                 />
-                <button
-                  onClick={() => setEditingIndex(index)}
-                  className="absolute top-2 right-2 bg-blue-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  ✎
-                </button>
-                <button
-                  onClick={() => {
-                    const newImages = [...images];
-                    newImages[index] = null;
-                    setImages(newImages);
-                  }}
-                  className="absolute top-2 right-12 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  ×
-                </button>
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => setEditingIndex(index)}
+                    className="bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      const newImages = [...images];
+                      newImages[index] = null;
+                      setImages(newImages);
+                    }}
+                    className="bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center h-64">
