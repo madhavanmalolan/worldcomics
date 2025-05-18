@@ -306,11 +306,11 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
   const handleMouseDown = (e) => {
     const { x, y } = getCanvasCoordinates(e.clientX, e.clientY);
 
-    if (tool === 'select') {
+    if (tool === 'select' || tool === 'resize') {
       // Check if clicking on a diamond first
       if (selectedElement && selectedElement.type === 'bubble') {
         const diamondPos = getDiamondPosition(selectedElement);
-        if (isPointInDiamond(x, y, diamondPos.x, diamondPos.y, 8)) {
+        if (isPointInDiamond(x, y, diamondPos.x, diamondPos.y, tool === 'resize' ? 32 : 16)) {
           setIsDraggingDiamond(true);
           setIsDragging(true);
           setDragStart({ x, y });
@@ -319,7 +319,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
 
         // Check if clicking on a resize handle
         const padding = 5;
-        const handleSize = 8;
+        const handleSize = tool === 'resize' ? 32 : 4;
         const boxX = selectedElement.x - selectedElement.width / 2 - padding;
         const boxY = selectedElement.y - selectedElement.height / 2 - padding;
         const boxWidth = selectedElement.width + padding * 2;
@@ -367,7 +367,6 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
       } else {
         setSelectedElement(null);
         setElements([...elements]);
-
       }
     } else if (tool === 'bubble') {
       const newBubble = {
@@ -384,16 +383,6 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
       setElements([...elements, newBubble]);
       setSelectedElement(newBubble);
       setTool('select');
-    } else if (tool === 'pointer') {
-      const newPointer = {
-        type: 'pointer',
-        startX: x,
-        startY: y,
-        endX: x,
-        endY: y
-      };
-      setElements([...elements, newPointer]);
-      setSelectedElement(newPointer);
     }
   };
 
@@ -411,7 +400,6 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
     const { x, y } = getCanvasCoordinates(e.clientX, e.clientY);
 
     if (isDraggingDiamond && selectedElement.type === 'bubble') {
-      // Calculate new pointer position relative to bubble
       const dx = x - dragStart.x;
       const dy = y - dragStart.y;
       
@@ -423,7 +411,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
     } else if (resizeHandle && selectedElement.type === 'bubble') {
       const dx = x - dragStart.x;
       const dy = y - dragStart.y;
-      const minSize = 50; // Minimum size for bubble
+      const minSize = 50;
 
       switch (resizeHandle) {
         case 'nw':
@@ -495,20 +483,14 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
       setDragStart({ x, y });
       setElements([...elements]);
     } else if (selectedElement.type === 'bubble') {
-      // Only move the bubble if we're actually dragging
-      if (isDragging) {
-        const dx = x - dragStart.x;
-        const dy = y - dragStart.y;
-        
-        selectedElement.x += dx;
-        selectedElement.y += dy;
-        
-        setDragStart({ x, y });
-        setElements([...elements]);
-      }
-    } else if (selectedElement.type === 'pointer') {
-      selectedElement.endX = x;
-      selectedElement.endY = y;
+      // Only move if we're not resizing
+      const dx = x - dragStart.x;
+      const dy = y - dragStart.y;
+      
+      selectedElement.x += dx;
+      selectedElement.y += dy;
+      
+      setDragStart({ x, y });
       setElements([...elements]);
     }
   };
@@ -696,7 +678,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
   };
 
   const handleTouchMove = (e) => {
-    e.preventDefault(); // Prevent scrolling while dragging
+    e.preventDefault();
     if (!isDragging || !selectedElement) return;
 
     const touch = e.touches[0];
@@ -786,6 +768,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
       setDragStart({ x, y });
       setElements([...elements]);
     } else if (selectedElement.type === 'bubble') {
+      // Only move if we're not resizing
       const dx = x - dragStart.x;
       const dy = y - dragStart.y;
       
