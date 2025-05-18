@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ethers } from 'ethers';
 import contracts from '@/app/constants/contracts.json';
-import { characters } from '@/app/constants/addresses.json';
+import addresses from '@/app/constants/addresses.json';
 import { getDatabase } from '@/app/lib/db';
 
 // Define Character Schema
@@ -76,7 +76,7 @@ export async function POST(request) {
 
     // Create contract interface for decoding
     const charactersContract = new ethers.Contract(
-      characters,
+      addresses.characters,
       contracts.characters.abi,
       provider
     );
@@ -86,7 +86,7 @@ export async function POST(request) {
       
       // Find the log from the Characters contract
       const characterLog = receipt.logs.find(log => 
-        log.address.toLowerCase() === characters.toLowerCase()
+        log.address.toLowerCase() === addresses.characters.toLowerCase()
       );
 
       if (!characterLog) {
