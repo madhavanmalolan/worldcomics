@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useSwipeable } from 'react-swipeable'; // You'll need to install this package
 import ComicCanvas from '@/app/components/ComicCanvas';
@@ -8,6 +8,78 @@ import { useAccount, useReadContract, useWriteContract, readContract } from 'wag
 import { ethers } from 'ethers';
 import contracts from '@/app/constants/contracts.json';
 import addresses from '@/app/constants/addresses.json';
+
+// Add TheaterMode component at the top of the file
+const TheaterMode = ({ 
+  isOpen, 
+  onClose, 
+  currentImage, 
+  currentStripIndex, 
+  currentImageIndex, 
+  strips,
+  onNavigate 
+}) => {
+  const handleImageClick = (e) => {
+    const rect = e.target.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const width = rect.width;
+    
+    if (x < width * 0.3) {
+      // Left side click
+      onNavigate('prev');
+    } else if (x > width * 0.7) {
+      // Right side click
+      onNavigate('next');
+    }
+  };
+
+  const handleOverlayClick = (e) => {
+    // Only close if clicking the overlay itself, not its children
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-90 z-50 flex flex-col items-center justify-center"
+      onClick={handleOverlayClick}
+    >
+      <div 
+        className="relative w-full h-full flex items-center justify-center"
+      >
+        <img
+          src={currentImage}
+          alt="Theater mode"
+          className="max-h-[80vh] max-w-[90vw] object-contain"
+          onClick={handleImageClick}
+        />
+      </div>
+      <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-8 text-white/50">
+        <button 
+          onClick={() => onNavigate('prev')}
+          className="hover:text-white/80 transition-colors"
+        >
+          Previous
+        </button>
+        <button 
+          onClick={onClose}
+          className="hover:text-white/80 transition-colors"
+        >
+          Close
+        </button>
+        <button 
+          onClick={() => onNavigate('next')}
+          className="hover:text-white/80 transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default function Feed() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -229,7 +301,7 @@ export default function Feed() {
       alert('Failed to vote. Please try again.');
     } finally {
       setIsVoting(prev => ({ ...prev, [stripId]: false }));
-      router.refresh();
+      window.location.reload();
     }
   };
 
@@ -320,10 +392,78 @@ export default function Feed() {
     );
   };
 
+  const [theaterMode, setTheaterMode] = useState({
+    isOpen: false,
+    currentStripIndex: 0,
+    currentImageIndex: 0
+  });
+  const stripRefs = useRef({});
+
+  // Add navigation handler
+  const handleTheaterNavigation = (direction) => {
+    const { currentStripIndex, currentImageIndex } = theaterMode;
+    const currentStrip = strips[currentStripIndex];
+    
+    if (direction === 'next') {
+      if (currentImageIndex < currentStrip.imageUrls.length - 1) {
+        // Next image in current strip
+        setTheaterMode(prev => ({
+          ...prev,
+          currentImageIndex: prev.currentImageIndex + 1
+        }));
+      } else if (currentStripIndex < strips.length - 1) {
+        // First image of next strip
+        setTheaterMode(prev => ({
+          ...prev,
+          currentStripIndex: prev.currentStripIndex + 1,
+          currentImageIndex: 0
+        }));
+      } else {
+        // Close if it's the last image of the last strip
+        setTheaterMode(prev => ({ ...prev, isOpen: false }));
+        handleTheaterClose();
+      }
+    } else {
+      if (currentImageIndex > 0) {
+        // Previous image in current strip
+        setTheaterMode(prev => ({
+          ...prev,
+          currentImageIndex: prev.currentImageIndex - 1
+        }));
+      } else if (currentStripIndex > 0) {
+        // Last image of previous strip
+        setTheaterMode(prev => ({
+          ...prev,
+          currentStripIndex: prev.currentStripIndex - 1,
+          currentImageIndex: strips[prev.currentStripIndex - 1].imageUrls.length - 1
+        }));
+      } else {
+        // Close if it's the first image of the first strip
+        setTheaterMode(prev => ({ ...prev, isOpen: false }));
+        handleTheaterClose();
+      }
+    }
+  };
+
+  // Add scroll handler
+  const handleTheaterClose = () => {
+    setTheaterMode(prev => ({ ...prev, isOpen: false }));
+    // Scroll to the strip after a short delay to ensure the DOM has updated
+    setTimeout(() => {
+      const stripElement = stripRefs.current[theaterMode.currentStripIndex];
+      if (stripElement) {
+        stripElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#f6f8fa] p-6 flex items-center justify-center">
-        <div className="text-[#57606a]">Loading pages...</div>
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <div className="text-[#57606a]">Loading comics...</div>
+        </div>
       </div>
     );
   }
@@ -372,12 +512,21 @@ export default function Feed() {
         {strips && strips.length > 0 ? (
           <div className="mt-4 space-y-8">
             {strips.map((strip, index) => (
-              <div key={index} className="bg-white p-4 rounded-lg shadow">
+              <div 
+                key={index} 
+                className="bg-white p-4 rounded-lg shadow"
+                ref={el => stripRefs.current[index] = el}
+              >
                 <div className="flex flex-col sm:flex-row justify-center w-full gap-4">
                   {strip.imageUrls.map((imageUrl, imgIndex) => (
                     <div 
                       key={imgIndex} 
-                      className="w-full sm:flex-1 aspect-square min-w-0"
+                      className="w-full sm:flex-1 aspect-square min-w-0 cursor-pointer"
+                      onClick={() => setTheaterMode({
+                        isOpen: true,
+                        currentStripIndex: index,
+                        currentImageIndex: imgIndex
+                      })}
                     >
                       <img
                         src={imageUrl}
@@ -404,8 +553,9 @@ export default function Feed() {
             ))}
           </div>
         ) : (
-          <div className="mt-4 text-gray-500">
-            No published strips yet.
+          <div className="mt-4 bg-white p-8 rounded-lg shadow text-center">
+            <div className="text-gray-500 text-lg">No strips finalized yet</div>
+            <div className="mt-2 text-gray-400">Be the first to create a strip that gets enough votes!</div>
           </div>
         )}
 
@@ -473,6 +623,17 @@ export default function Feed() {
             Add a new strip
           </Link>
         </div>
+
+        {/* Add TheaterMode component */}
+        <TheaterMode
+          isOpen={theaterMode.isOpen}
+          onClose={handleTheaterClose}
+          currentImage={strips[theaterMode.currentStripIndex]?.imageUrls[theaterMode.currentImageIndex]}
+          currentStripIndex={theaterMode.currentStripIndex}
+          currentImageIndex={theaterMode.currentImageIndex}
+          strips={strips}
+          onNavigate={handleTheaterNavigation}
+        />
       </div>
     </div>
   );
