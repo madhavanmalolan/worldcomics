@@ -3,6 +3,10 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { File } from 'formdata-node';
+import { ethers } from 'ethers';
+import contracts from '@/app/constants/contracts.json';
+import addresses from '@/app/constants/addresses.json';
+import { getDatabase } from '@/app/lib/db';
 
 // Initialize OpenAI
 const openai = new OpenAI({
@@ -30,12 +34,144 @@ export async function POST(request) {
   const requestId = Math.random().toString(36).substring(7);
   
   try {
-    const { prompt, comic, previousPanel, scene, props } = await request.json();
+    const { prompt, comic, previousPanel, scene, props, txHash } = await request.json();
     console.log(prompt, comic, previousPanel, scene, props);
     
     if (!comic  || !comic.style || !comic.characters || !prompt) {
       return NextResponse.json(
         { error: 'Comic object with name, style, characters and prompt is required' },
+        { status: 400 }
+      );
+    }
+
+    if (!txHash) {
+      return NextResponse.json(
+        { error: 'Transaction hash is required' },
+        { status: 400 }
+      );
+    }
+
+    // Check if transaction hash has been used before
+    const db = await getDatabase();
+    const existingTx = await db.collection('processedTransactions'+ process.env.DATABASE_VERSION).findOne({ txHash });
+    
+    if (existingTx) {
+      console.log('Transaction hash already used');
+      return NextResponse.json(
+        { error: 'Transaction hash has already been used' },
+        { status: 400 }
+      );
+    }
+
+    // Initialize provider
+    const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL);
+    
+    // Wait for transaction to be confirmed
+    let receipt;
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    while (attempts < maxAttempts) {
+      receipt = await provider.getTransactionReceipt(txHash);
+      if (receipt) {
+        break;
+      }
+      await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds between attempts
+      attempts++;
+    }
+
+    if (!receipt) {
+      console.log('Transaction not found or not confirmed');
+      return NextResponse.json(
+        { error: 'Transaction not found or not confirmed' },
+        { status: 404 }
+      );
+    }
+
+    if (!receipt.status) {
+      console.log('Transaction failed');
+      return NextResponse.json(
+        { error: 'Transaction failed' },
+        { status: 400 }
+      );
+    }
+
+    // Create Admin contract interface for decoding
+    const adminContract = new ethers.Contract(
+      addresses.admin,
+      contracts.admin.abi,
+      provider
+    );
+
+    try {
+      console.log('\n=== Transaction Details ===');
+      console.log('Transaction hash:', receipt.transactionHash);
+      console.log('From:', receipt.from);
+      console.log('To:', receipt.to);
+      console.log('Data:', receipt.data);
+
+      console.log('\n=== All Events ===');
+      let promptPaidEvent = null;
+      
+      for (const log of receipt.logs) {
+        console.log('\nEvent Log:');
+        console.log('Address:', log.address);
+        console.log('Topics:', log.topics);
+        console.log('Data:', log.data);
+        
+        // Try to decode the event using the admin contract interface
+        try {
+          const decodedLog = adminContract.interface.parseLog({
+            topics: log.topics,
+            data: log.data
+          });
+          console.log('Decoded Event:', decodedLog);
+          
+          // Check if this is the PromptPaid event
+          if (decodedLog.name === 'PromptPaid') {
+            promptPaidEvent = decodedLog;
+          }
+        } catch (e) {
+          console.log('Could not decode with admin contract interface');
+        }
+      }
+
+      if (!promptPaidEvent) {
+        console.log('No PromptPaid event found');
+        return NextResponse.json(
+          { error: 'No PromptPaid event found' },
+          { status: 400 }
+        );
+      }
+
+      // Verify the PromptPaid event parameters
+      // PromptPaid(address indexed user, uint256 amount)
+      const [eventUser, eventAmount] = promptPaidEvent.args;
+      
+      // Get the current prompt price from the contract
+      const promptPrice = await adminContract.PROMPT_PRICE();
+      
+      if (eventAmount < promptPrice) {
+        console.log('Payment amount is less than required');
+        return NextResponse.json(
+          { error: 'Payment amount is less than required' },
+          { status: 400 }
+        );
+      }
+
+      // Store the transaction hash as processed
+      await db.collection('processedTransactions'+ process.env.DATABASE_VERSION).insertOne({
+        txHash,
+        type: 'comic_panel_generation',
+        createdAt: new Date(),
+        user: eventUser,
+        amount: eventAmount.toString()
+      });
+
+    } catch (error) {
+      console.error('Error decoding transaction:', error);
+      return NextResponse.json(
+        { error: 'Invalid transaction data' },
         { status: 400 }
       );
     }

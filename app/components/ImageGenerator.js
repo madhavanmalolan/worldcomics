@@ -201,12 +201,16 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
       // After payment is confirmed, generate the image
       let generatedImage = null;
       let generatedText = null;
+      console.log(tx);
+      const txHash = tx;
+      console.log("Tx hash: ", txHash);
       if(imageType === "character"){
         console.log("Generating character image");
         const response = await imageGenApi.post('/api/generate-image/characters', {
           name: " ",
           description: prompt,
           style: artisticStyle,
+          txHash: txHash,
         });
         console.log(response.data);
         generatedImage = response.data.character.image;
@@ -216,6 +220,7 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
           name: " ",
           description: prompt,
           style: artisticStyle,
+          txHash: txHash,
         });
         console.log(response.data);
         generatedImage = response.data.prop.image;
@@ -231,7 +236,8 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
             characters: selectedCharacters.map(c => ({name : c.name, portraitUrl: c.image })),
           },
           props: selectedProps.map(p => ({name : p.name, imageUrl: p.image })),
-          scene: selectedScenes.length > 0 ? { name: selectedScenes[0].name, imageUrl: selectedScenes[0].image } : null
+          scene: selectedScenes.length > 0 ? { name: selectedScenes[0].name, imageUrl: selectedScenes[0].image } : null,
+          txHash: txHash,
         });
         console.log(response.data);
         generatedImage = response.data.image;
@@ -242,6 +248,7 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
           name: " ",
           description: prompt,
           style: artisticStyle,
+          txHash: txHash,
         });
         console.log(response.data);
         generatedImage = response.data.image;
