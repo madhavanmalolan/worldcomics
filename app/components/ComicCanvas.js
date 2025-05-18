@@ -19,7 +19,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [image, setImage] = useState(initialImage);
-  const [tool, setTool] = useState('select'); // 'select', 'bubble', 'pointer'
+  const [tool, setTool] = useState('select'); // 'select', 'bubble', 'pointer', 'resize'
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 800 });
   const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0].value);
   const [isDraggingDiamond, setIsDraggingDiamond] = useState(false);
@@ -174,7 +174,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
     // Draw selection bounding box and resize handles if bubble is selected
     if (bubble === selectedElement) {
       const padding = 5;
-      const handleSize = 48;
+      const handleSize = tool === 'resize' ? 48 : 8; // Use larger handles in resize mode
       const boxX = bubble.x - bubble.width / 2 - padding;
       const boxY = bubble.y - bubble.height / 2 - padding;
       const boxWidth = bubble.width + padding * 2;
@@ -211,7 +211,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
         ctx.fillStyle = 'white';
         ctx.strokeStyle = 'rgba(173, 216, 230, 0.8)';
         ctx.lineWidth = 2;
-        const visibleSize = 16; // Smaller visible indicator
+        const visibleSize = tool === 'resize' ? 16 : 8; // Larger visible handles in resize mode
         ctx.fillRect(
           handle.x - visibleSize / 2,
           handle.y - visibleSize / 2,
@@ -612,15 +612,15 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
   };
 
   const handleTouchStart = (e) => {
-    e.preventDefault(); // Prevent scrolling while interacting with canvas
+    e.preventDefault();
     const touch = e.touches[0];
     const { x, y } = getCanvasCoordinates(touch.clientX, touch.clientY);
 
-    if (tool === 'select') {
+    if (tool === 'select' || tool === 'resize') {
       // Check if touching a diamond first
       if (selectedElement && selectedElement.type === 'bubble') {
         const diamondPos = getDiamondPosition(selectedElement);
-        if (isPointInDiamond(x, y, diamondPos.x, diamondPos.y, 32)) {
+        if (isPointInDiamond(x, y, diamondPos.x, diamondPos.y, tool === 'resize' ? 32 : 16)) {
           setIsDraggingDiamond(true);
           setIsDragging(true);
           setDragStart({ x, y });
@@ -629,7 +629,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
 
         // Check if touching a resize handle
         const padding = 5;
-        const handleSize = 48;
+        const handleSize = tool === 'resize' ? 48 : 8;
         const boxX = selectedElement.x - selectedElement.width / 2 - padding;
         const boxY = selectedElement.y - selectedElement.height / 2 - padding;
         const boxWidth = selectedElement.width + padding * 2;
@@ -825,28 +825,36 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
         <div className="flex flex-col gap-2">
           <h3 className="text-sm font-medium text-gray-700">Dialog Bubbles</h3>
           <div className="flex gap-2">
+          <button
+              className={`px-4 py-2 rounded ${
+                tool === 'bubble' ? 'bg-blue-500 text-white' : 'bg-gray-200'
+              }`}
+              onClick={() => setTool('bubble')}
+            >
+              Add
+            </button>
             <button
               className={`px-4 py-2 rounded ${
                 tool === 'select' ? 'bg-blue-500 text-white' : 'bg-gray-200'
               }`}
               onClick={() => setTool('select')}
             >
-              Select Dialog
+              Move
             </button>
             <button
               className={`px-4 py-2 rounded ${
-                tool === 'bubble' ? 'bg-blue-500 text-white' : 'bg-gray-200'
+                tool === 'resize' ? 'bg-blue-500 text-white' : 'bg-gray-200'
               }`}
-              onClick={() => setTool('bubble')}
+              onClick={() => setTool('resize')}
             >
-              Add Dialog
+              Resize
             </button>
             <button
               className="px-4 py-2 rounded bg-red-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleDelete}
               disabled={!selectedElement}
             >
-              Delete Dialog
+              Delete
             </button>
           </div>
         </div>
