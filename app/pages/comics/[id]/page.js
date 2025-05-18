@@ -210,24 +210,22 @@ export default function Feed() {
   const CandidateCard = ({ candidate, index }) => {
     return (
       <div className="bg-white p-4 rounded-lg shadow">
-        <div className="flex justify-center w-full">
-          <div className="flex gap-4 w-full">
-            {candidate.imageUrls.map((imageUrl, imgIndex) => (
-              <div 
-                key={imgIndex} 
-                className="flex-1 aspect-square min-w-0"
-              >
-                <img
-                  src={imageUrl}
-                  alt={`Strip ${index + 1} Panel ${imgIndex + 1}`}
-                  className="w-full h-full object-cover rounded-md"
-                />
-              </div>
-            ))}
-            {Array.from({ length: 4 - candidate.imageUrls.length }).map((_, i) => (
-              <div key={`empty-${i}`} className="flex-1" />
-            ))}
-          </div>
+        <div className="flex flex-col sm:flex-row justify-center w-full gap-4">
+          {candidate.imageUrls.map((imageUrl, imgIndex) => (
+            <div 
+              key={imgIndex} 
+              className="w-full sm:flex-1 aspect-square min-w-0"
+            >
+              <img
+                src={imageUrl}
+                alt={`Strip ${index + 1} Panel ${imgIndex + 1}`}
+                className="w-full h-full object-cover rounded-md"
+              />
+            </div>
+          ))}
+          {Array.from({ length: 4 - candidate.imageUrls.length }).map((_, i) => (
+            <div key={`empty-${i}`} className="w-full sm:flex-1" />
+          ))}
         </div>
         <div className="mt-4 flex items-center justify-between">
           <div className="text-sm text-gray-500">
@@ -306,28 +304,49 @@ export default function Feed() {
   return (
     <div className="min-h-screen bg-[#f6f8fa]">
       <div className="px-4 sm:px-6 lg:px-8">
+        {/* How Does This Work Section */}
+        <div className="mt-4 mb-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <h2 className="text-lg font-semibold text-yellow-800 mb-4">How Does This Work?</h2>
+          <ul className="space-y-2 text-yellow-700">
+            <li className="flex items-start">
+              <span className="mr-2">•</span>
+              <span>Below are the finalized strips. These are published on the blockchain. </span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2">•</span>
+              <span>With each passing strip added to the comic, it becomes more expensive to add another strip to the evolving store. We don't want someone to come and mess up the story.</span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2">•</span>
+              <span><u><a href={`/pages/comics/${comicId}/create-strip`}>Anyone can create</a></u> the next strip in the comic. But it needs to get enough votes to be published.</span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2">•</span>
+              <span>What you are seeing below is a truly world-wide collaborative comic. No one is in control of it. It is created by the community, for the community.</span>
+            </li>
+          </ul>
+        </div>
+
         {strips && strips.length > 0 ? (
           <div className="mt-4 space-y-8">
             {strips.map((strip, index) => (
               <div key={index} className="bg-white p-4 rounded-lg shadow">
-                <div className="flex justify-center w-full">
-                  <div className="flex gap-4 w-full">
-                    {strip.imageUrls.map((imageUrl, imgIndex) => (
-                      <div 
-                        key={imgIndex} 
-                        className="flex-1 aspect-square min-w-0"
-                      >
-                        <img
-                          src={imageUrl}
-                          alt={`Strip ${index + 1} Panel ${imgIndex + 1}`}
-                          className="w-full h-full object-cover rounded-md"
-                        />
-                      </div>
-                    ))}
-                    {Array.from({ length: 4 - strip.imageUrls.length }).map((_, i) => (
-                      <div key={`empty-${i}`} className="flex-1" />
-                    ))}
-                  </div>
+                <div className="flex flex-col sm:flex-row justify-center w-full gap-4">
+                  {strip.imageUrls.map((imageUrl, imgIndex) => (
+                    <div 
+                      key={imgIndex} 
+                      className="w-full sm:flex-1 aspect-square min-w-0"
+                    >
+                      <img
+                        src={imageUrl}
+                        alt={`Strip ${index + 1} Panel ${imgIndex + 1}`}
+                        className="w-full h-full object-cover rounded-md"
+                      />
+                    </div>
+                  ))}
+                  {Array.from({ length: 4 - strip.imageUrls.length }).map((_, i) => (
+                    <div key={`empty-${i}`} className="w-full sm:flex-1" />
+                  ))}
                 </div>
                 <div className="mt-4 flex items-center justify-between">
                   <div className="text-sm text-gray-500">
@@ -349,6 +368,27 @@ export default function Feed() {
         )}
 
         <h2 className="text-lg font-medium text-gray-900 mt-8">Candidates for tomorrow's strip</h2>
+        <div className="mt-4 mb-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <h2 className="text-lg font-semibold text-yellow-800 mb-4">How Does This Work?</h2>
+          <ul className="space-y-2 text-yellow-700">
+            <li className="flex items-start">
+              <span className="mr-2">•</span>
+              <span>Below are the candidates for the next strip. The first strip to pass the threshold votes will be added permanently to the comic, and published on the blockchain. </span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2">•</span>
+              <span>You can vote for your favorite candidate for the next strip in this comic with ETH. </span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2">•</span>
+              <span>The first strip to pass the threshold ETH in votes will be added permanently to the comic, and published on the blockchain. </span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2">•</span>
+              <span>When the strip is published, the ETH collected via the votes are distributed to the creator of the strip, and the creators of the characters, props and scenes used in the strip.</span>
+            </li>
+          </ul>
+        </div>
         {!isConnected ? (
           <div className="mt-2 text-sm text-gray-600">
             Connect your wallet to vote

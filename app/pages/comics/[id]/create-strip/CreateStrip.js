@@ -188,7 +188,34 @@ export default function CreateStrip({ comicId }) {
       <h1 className="text-2xl font-bold mb-4">
         {isLoadingComic ? 'Loading Comic...' : `Create Strip for ${comic?.name || 'Comic'}`}
       </h1>
-      
+      {/* How Does This Work Section */}
+      <div className="mt-4 mb-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <h2 className="text-lg font-semibold text-yellow-800 mb-4">How Does This Work?</h2>
+          <ul className="space-y-2 text-yellow-700">
+            <li className="flex items-start">
+              <span className="mr-2">•</span>
+              <span>You are creating a strip to continue the story of the comic. </span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2">•</span>
+              <span>Once you create a strip, it will be available for voting. People can vote with ETH. </span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2">•</span>
+              <span>If your strip is the first to get enough ETH in votes, the strip will be added to the comics and you will receive a share of the ETH collected.</span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2">•</span>
+              <span>The strip will automatically use the artistic style of the comic. To maintain consistency, use the characters, props and scenes available on this site and used in the comic. Once you create the image, you can add dialog bubbles to it.</span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2">•</span>
+              <span>This is a global collaboration for making the most fun comics!</span>
+            </li>
+
+          </ul>
+        </div>
+
       {isLoadingComic && (
         <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
           <p className="text-sm text-blue-800">Loading comic data...</p>
