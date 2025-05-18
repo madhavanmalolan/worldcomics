@@ -70,7 +70,7 @@ export default function Feed() {
           <ul className="space-y-2 text-yellow-700">
             <li className="flex items-start">
               <span className="mr-2">•</span>
-              <span>Every comic is on the blockchain and is free to read. But everything else on this site is paid! Be sure to setup <u><a href="https://coinbase.com/wallet" target="_blank" rel="noopener noreferrer">Coinbase wallet</a></u> and top it up with ETH to participate in creating comics. You don't need to do this, if all you want to do is read!</span>
+              <span>Every comic is on the blockchain and is free to read. But everything else on this site is paid! Be sure to setup <u><a href="https://coinbase.com/wallet" target="_blank" rel="noopener noreferrer">Coinbase wallet</a></u> and top it up with ETH and connect wallet to this site to participate in creating comics. You don't need to do this, if all you want to do is read!</span>
             </li>
             <li className="flex items-start">
               <span className="mr-2">•</span>
