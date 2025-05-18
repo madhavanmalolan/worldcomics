@@ -17,6 +17,7 @@ export default function CreateStrip({ comicId }) {
   const [comic, setComic] = useState(null);
   const [isLoadingComic, setIsLoadingComic] = useState(false);
   const [txHash, setTxHash] = useState('');
+  const [isHowItWorksExpanded, setIsHowItWorksExpanded] = useState(true);
   const { address, isConnected } = useAccount();
   const publicClient = usePublicClient();
 
@@ -42,6 +43,21 @@ export default function CreateStrip({ comicId }) {
   const { isConfirming, isConfirmed } = useWaitForTransactionReceipt({
     hash: txHash,
   });
+
+  // Load initial state from localStorage
+  useEffect(() => {
+    const savedState = localStorage.getItem('createStripHowItWorksExpanded');
+    if (savedState !== null) {
+      setIsHowItWorksExpanded(JSON.parse(savedState));
+    }
+  }, []);
+
+  // Save state to localStorage when it changes
+  const toggleHowItWorks = () => {
+    const newState = !isHowItWorksExpanded;
+    setIsHowItWorksExpanded(newState);
+    localStorage.setItem('createStripHowItWorksExpanded', JSON.stringify(newState));
+  };
 
   // Load comic data when component mounts
   useEffect(() => {
@@ -190,8 +206,22 @@ export default function CreateStrip({ comicId }) {
       </h1>
       {/* How Does This Work Section */}
       <div className="mt-4 mb-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-yellow-800 mb-4">How Does This Work?</h2>
-          <ul className="space-y-2 text-yellow-700">
+        <button 
+          onClick={toggleHowItWorks}
+          className="w-full flex items-center justify-between text-left"
+        >
+          <h2 className="text-lg font-semibold text-yellow-800">How Does This Work?</h2>
+          <svg 
+            className={`w-5 h-5 transform transition-transform ${isHowItWorksExpanded ? 'rotate-180' : ''}`} 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {isHowItWorksExpanded && (
+          <ul className="mt-4 space-y-2 text-yellow-700">
             <li className="flex items-start">
               <span className="mr-2">•</span>
               <span>You are creating a strip to continue the story of the comic. </span>
@@ -212,9 +242,9 @@ export default function CreateStrip({ comicId }) {
               <span className="mr-2">•</span>
               <span>This is a global collaboration for making the most fun comics!</span>
             </li>
-
           </ul>
-        </div>
+        )}
+      </div>
 
       {isLoadingComic && (
         <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">

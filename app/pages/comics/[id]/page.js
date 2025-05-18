@@ -19,6 +19,8 @@ export default function Feed() {
   const [strips, setStrips] = useState([]);
   const [voteAmounts, setVoteAmounts] = useState({});
   const [isVoting, setIsVoting] = useState({});
+  const [isPublishedStripsExpanded, setIsPublishedStripsExpanded] = useState(true);
+  const [isCandidatesExpanded, setIsCandidatesExpanded] = useState(true);
   const router = useRouter();
   const params = useParams();
   const comicId = params.id;
@@ -50,6 +52,31 @@ export default function Feed() {
     args: [currentDay],
     enabled: !!comicsAddress && currentDay !== undefined,
   });
+
+  // Load initial states from localStorage
+  useEffect(() => {
+    const savedPublishedState = localStorage.getItem('publishedStripsExpanded');
+    const savedCandidatesState = localStorage.getItem('candidatesExpanded');
+    if (savedPublishedState !== null) {
+      setIsPublishedStripsExpanded(JSON.parse(savedPublishedState));
+    }
+    if (savedCandidatesState !== null) {
+      setIsCandidatesExpanded(JSON.parse(savedCandidatesState));
+    }
+  }, []);
+
+  // Save states to localStorage when they change
+  const togglePublishedStrips = () => {
+    const newState = !isPublishedStripsExpanded;
+    setIsPublishedStripsExpanded(newState);
+    localStorage.setItem('publishedStripsExpanded', JSON.stringify(newState));
+  };
+
+  const toggleCandidates = () => {
+    const newState = !isCandidatesExpanded;
+    setIsCandidatesExpanded(newState);
+    localStorage.setItem('candidatesExpanded', JSON.stringify(newState));
+  };
 
   useEffect(() => {
     loadComicPages();
@@ -304,27 +331,42 @@ export default function Feed() {
   return (
     <div className="min-h-screen bg-[#f6f8fa]">
       <div className="px-4 sm:px-6 lg:px-8">
-        {/* How Does This Work Section */}
+        {/* Published Strips How Does This Work Section */}
         <div className="mt-4 mb-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-yellow-800 mb-4">How Does This Work?</h2>
-          <ul className="space-y-2 text-yellow-700">
-            <li className="flex items-start">
-              <span className="mr-2">•</span>
-              <span>Below are the finalized strips. These are published on the blockchain. </span>
-            </li>
-            <li className="flex items-start">
-              <span className="mr-2">•</span>
-              <span>With each passing strip added to the comic, it becomes more expensive to add another strip to the evolving store. We don't want someone to come and mess up the story.</span>
-            </li>
-            <li className="flex items-start">
-              <span className="mr-2">•</span>
-              <span><u><a href={`/pages/comics/${comicId}/create-strip`}>Anyone can create</a></u> the next strip in the comic. But it needs to get enough votes to be published.</span>
-            </li>
-            <li className="flex items-start">
-              <span className="mr-2">•</span>
-              <span>What you are seeing below is a truly world-wide collaborative comic. No one is in control of it. It is created by the community, for the community.</span>
-            </li>
-          </ul>
+          <button 
+            onClick={togglePublishedStrips}
+            className="w-full flex items-center justify-between text-left"
+          >
+            <h2 className="text-lg font-semibold text-yellow-800">How Does This Work?</h2>
+            <svg 
+              className={`w-5 h-5 transform transition-transform ${isPublishedStripsExpanded ? 'rotate-180' : ''}`} 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {isPublishedStripsExpanded && (
+            <ul className="mt-4 space-y-2 text-yellow-700">
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>Below are the finalized strips. These are published on the blockchain. </span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>With each passing strip added to the comic, it becomes more expensive to add another strip to the evolving store. We don't want someone to come and mess up the story.</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span><u><a href={`/pages/comics/${comicId}/create-strip`}>Anyone can create</a></u> the next strip in the comic. But it needs to get enough votes to be published.</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>What you are seeing below is a truly world-wide collaborative comic. No one is in control of it. It is created by the community, for the community.</span>
+              </li>
+            </ul>
+          )}
         </div>
 
         {strips && strips.length > 0 ? (
@@ -368,26 +410,42 @@ export default function Feed() {
         )}
 
         <h2 className="text-lg font-medium text-gray-900 mt-8">Candidates for tomorrow's strip</h2>
+        {/* Candidates How Does This Work Section */}
         <div className="mt-4 mb-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-yellow-800 mb-4">How Does This Work?</h2>
-          <ul className="space-y-2 text-yellow-700">
-            <li className="flex items-start">
-              <span className="mr-2">•</span>
-              <span>Below are the candidates for the next strip. The first strip to pass the threshold votes will be added permanently to the comic, and published on the blockchain. </span>
-            </li>
-            <li className="flex items-start">
-              <span className="mr-2">•</span>
-              <span>You can vote for your favorite candidate for the next strip in this comic with ETH. </span>
-            </li>
-            <li className="flex items-start">
-              <span className="mr-2">•</span>
-              <span>The first strip to pass the threshold ETH in votes will be added permanently to the comic, and published on the blockchain. </span>
-            </li>
-            <li className="flex items-start">
-              <span className="mr-2">•</span>
-              <span>When the strip is published, the ETH collected via the votes are distributed to the creator of the strip, and the creators of the characters, props and scenes used in the strip.</span>
-            </li>
-          </ul>
+          <button 
+            onClick={toggleCandidates}
+            className="w-full flex items-center justify-between text-left"
+          >
+            <h2 className="text-lg font-semibold text-yellow-800">How Does This Work?</h2>
+            <svg 
+              className={`w-5 h-5 transform transition-transform ${isCandidatesExpanded ? 'rotate-180' : ''}`} 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {isCandidatesExpanded && (
+            <ul className="mt-4 space-y-2 text-yellow-700">
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>Below are the candidates for the next strip. The first strip to pass the threshold votes will be added permanently to the comic, and published on the blockchain. </span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>You can vote for your favorite candidate for the next strip in this comic with ETH. </span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>The first strip to pass the threshold ETH in votes will be added permanently to the comic, and published on the blockchain. </span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>When the strip is published, the ETH collected via the votes are distributed to the creator of the strip, and the creators of the characters, props and scenes used in the strip.</span>
+              </li>
+            </ul>
+          )}
         </div>
         {!isConnected ? (
           <div className="mt-2 text-sm text-gray-600">

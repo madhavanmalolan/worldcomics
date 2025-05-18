@@ -600,6 +600,199 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
     setElements([...elements]);
   };
 
+  const handleTouchStart = (e) => {
+    e.preventDefault(); // Prevent scrolling while interacting with canvas
+    const touch = e.touches[0];
+    const { x, y } = getCanvasCoordinates(touch.clientX, touch.clientY);
+
+    if (tool === 'select') {
+      // Check if touching a diamond first
+      if (selectedElement && selectedElement.type === 'bubble') {
+        const diamondPos = getDiamondPosition(selectedElement);
+        if (isPointInDiamond(x, y, diamondPos.x, diamondPos.y, 8)) {
+          setIsDraggingDiamond(true);
+          setIsDragging(true);
+          setDragStart({ x, y });
+          return;
+        }
+
+        // Check if touching a resize handle
+        const padding = 5;
+        const handleSize = 8;
+        const boxX = selectedElement.x - selectedElement.width / 2 - padding;
+        const boxY = selectedElement.y - selectedElement.height / 2 - padding;
+        const boxWidth = selectedElement.width + padding * 2;
+        const boxHeight = selectedElement.height + padding * 2;
+
+        const handles = [
+          { x: boxX, y: boxY, type: 'nw' },
+          { x: boxX + boxWidth / 2, y: boxY, type: 'n' },
+          { x: boxX + boxWidth, y: boxY, type: 'ne' },
+          { x: boxX + boxWidth, y: boxY + boxHeight / 2, type: 'e' },
+          { x: boxX + boxWidth, y: boxY + boxHeight, type: 'se' },
+          { x: boxX + boxWidth / 2, y: boxY + boxHeight, type: 's' },
+          { x: boxX, y: boxY + boxHeight, type: 'sw' },
+          { x: boxX, y: boxY + boxHeight / 2, type: 'w' }
+        ];
+
+        const touchedHandle = handles.find(handle => 
+          isPointInHandle(x, y, handle.x, handle.y, handleSize)
+        );
+
+        if (touchedHandle) {
+          setResizeHandle(touchedHandle.type);
+          setIsDragging(true);
+          setDragStart({ x, y });
+          return;
+        }
+      }
+
+      // Find touched element
+      const touchedElement = elements.find(element => {
+        if (element.type === 'bubble') {
+          return isPointInBubble(x, y, element);
+        }
+        return false;
+      });
+
+      if (touchedElement) {
+        setSelectedElement(touchedElement);
+        setElements([...elements]);
+        if (touchedElement === selectedElement) {
+          setIsDragging(true);
+          setDragStart({ x, y });
+        }
+      } else {
+        setSelectedElement(null);
+        setElements([...elements]);
+      }
+    } else if (tool === 'bubble') {
+      const newBubble = {
+        type: 'bubble',
+        x,
+        y,
+        width: 200,
+        height: 100,
+        text: 'Click to edit text',
+        font: selectedFont,
+        pointerX: 0,
+        pointerY: 30
+      };
+      setElements([...elements, newBubble]);
+      setSelectedElement(newBubble);
+      setTool('select');
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    e.preventDefault(); // Prevent scrolling while dragging
+    if (!isDragging || !selectedElement) return;
+
+    const touch = e.touches[0];
+    const { x, y } = getCanvasCoordinates(touch.clientX, touch.clientY);
+
+    if (isDraggingDiamond && selectedElement.type === 'bubble') {
+      const dx = x - dragStart.x;
+      const dy = y - dragStart.y;
+      
+      selectedElement.pointerX = (selectedElement.pointerX || 30) + dx;
+      selectedElement.pointerY = (selectedElement.pointerY || 30) + dy;
+      
+      setDragStart({ x, y });
+      setElements([...elements]);
+    } else if (resizeHandle && selectedElement.type === 'bubble') {
+      const dx = x - dragStart.x;
+      const dy = y - dragStart.y;
+      const minSize = 50;
+
+      switch (resizeHandle) {
+        case 'nw':
+          if (selectedElement.width - dx >= minSize) {
+            selectedElement.width -= dx;
+            selectedElement.x += dx / 2;
+          }
+          if (selectedElement.height - dy >= minSize) {
+            selectedElement.height -= dy;
+            selectedElement.y += dy / 2;
+          }
+          break;
+        case 'n':
+          if (selectedElement.height - dy >= minSize) {
+            selectedElement.height -= dy;
+            selectedElement.y += dy / 2;
+          }
+          break;
+        case 'ne':
+          if (selectedElement.width + dx >= minSize) {
+            selectedElement.width += dx;
+            selectedElement.x += dx / 2;
+          }
+          if (selectedElement.height - dy >= minSize) {
+            selectedElement.height -= dy;
+            selectedElement.y += dy / 2;
+          }
+          break;
+        case 'e':
+          if (selectedElement.width + dx >= minSize) {
+            selectedElement.width += dx;
+            selectedElement.x += dx / 2;
+          }
+          break;
+        case 'se':
+          if (selectedElement.width + dx >= minSize) {
+            selectedElement.width += dx;
+            selectedElement.x += dx / 2;
+          }
+          if (selectedElement.height + dy >= minSize) {
+            selectedElement.height += dy;
+            selectedElement.y += dy / 2;
+          }
+          break;
+        case 's':
+          if (selectedElement.height + dy >= minSize) {
+            selectedElement.height += dy;
+            selectedElement.y += dy / 2;
+          }
+          break;
+        case 'sw':
+          if (selectedElement.width - dx >= minSize) {
+            selectedElement.width -= dx;
+            selectedElement.x += dx / 2;
+          }
+          if (selectedElement.height + dy >= minSize) {
+            selectedElement.height += dy;
+            selectedElement.y += dy / 2;
+          }
+          break;
+        case 'w':
+          if (selectedElement.width - dx >= minSize) {
+            selectedElement.width -= dx;
+            selectedElement.x += dx / 2;
+          }
+          break;
+      }
+
+      setDragStart({ x, y });
+      setElements([...elements]);
+    } else if (selectedElement.type === 'bubble') {
+      const dx = x - dragStart.x;
+      const dy = y - dragStart.y;
+      
+      selectedElement.x += dx;
+      selectedElement.y += dy;
+      
+      setDragStart({ x, y });
+      setElements([...elements]);
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    setIsDraggingDiamond(false);
+    setResizeHandle(null);
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex gap-2 flex-wrap">
@@ -671,12 +864,15 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
             ref={canvasRef}
             width={canvasSize.width}
             height={canvasSize.height}
-            className="border border-gray-300 absolute inset-0 w-full h-full object-contain"
+            className="border border-gray-300 absolute inset-0 w-full h-full object-contain touch-none"
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
             onDoubleClick={handleDoubleClick}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           />
         </div>
       ) : (

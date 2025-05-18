@@ -18,9 +18,25 @@ export default function CreateComicPage() {
   const [txHash, setTxHash] = useState('');
   const [comicData, setComicData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isHowItWorksExpanded, setIsHowItWorksExpanded] = useState(true);
   const { address, isConnected } = useAccount();
   const publicClient = usePublicClient();
   const router = useRouter();
+
+  // Load initial state from localStorage
+  useEffect(() => {
+    const savedState = localStorage.getItem('createHowItWorksExpanded');
+    if (savedState !== null) {
+      setIsHowItWorksExpanded(JSON.parse(savedState));
+    }
+  }, []);
+
+  // Save state to localStorage when it changes
+  const toggleHowItWorks = () => {
+    const newState = !isHowItWorksExpanded;
+    setIsHowItWorksExpanded(newState);
+    localStorage.setItem('createHowItWorksExpanded', JSON.stringify(newState));
+  };
 
   // Get Comics contract address from Admin
   const adminAddress = addresses.admin;
@@ -136,6 +152,48 @@ export default function CreateComicPage() {
   return (
     <div className="min-h-screen bg-gray-100 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* How Does This Work Section */}
+        <div className="mt-4 mb-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <button 
+            onClick={toggleHowItWorks}
+            className="w-full flex items-center justify-between text-left"
+          >
+            <h2 className="text-lg font-semibold text-yellow-800">How Does This Work?</h2>
+            <svg 
+              className={`w-5 h-5 transform transition-transform ${isHowItWorksExpanded ? 'rotate-180' : ''}`} 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {isHowItWorksExpanded && (
+            <ul className="mt-4 space-y-2 text-yellow-700">
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>Create a new comic by providing a name and cover image. The comic will be stored on the blockchain as an NFT.</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>Once created, anyone can add new strips to your comic by creating characters, props, and scenes.</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>Each strip needs to get enough votes to be published. The vote threshold increases with each strip added.</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>The person who has contributed more than half of all the votes in a comic becomes the owner of its IP rights.</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>The current cost to create a comic is {mintPrice ? ethers.formatEther(mintPrice) : '0.01'} ETH.</span>
+              </li>
+            </ul>
+          )}
+        </div>
+
         <div className="bg-white shadow rounded-lg p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
             {comicData ? 'Edit Comic' : 'Create a New Comic'}

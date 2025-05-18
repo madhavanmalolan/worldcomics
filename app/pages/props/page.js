@@ -16,6 +16,7 @@ export default function PropsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [txHash, setTxHash] = useState('');
   const [props, setProps] = useState([]);
+  const [isHowItWorksExpanded, setIsHowItWorksExpanded] = useState(true);
   const { address, isConnected } = useAccount();
 
   // Get Props contract address from Admin
@@ -80,6 +81,21 @@ export default function PropsPage() {
 
     fetchProps();
   }, []);
+
+  // Load initial state from localStorage
+  useEffect(() => {
+    const savedState = localStorage.getItem('propsHowItWorksExpanded');
+    if (savedState !== null) {
+      setIsHowItWorksExpanded(JSON.parse(savedState));
+    }
+  }, []);
+
+  // Save state to localStorage when it changes
+  const toggleHowItWorks = () => {
+    const newState = !isHowItWorksExpanded;
+    setIsHowItWorksExpanded(newState);
+    localStorage.setItem('propsHowItWorksExpanded', JSON.stringify(newState));
+  };
 
   const handleNameChange = (e) => {
     const value = e.target.value;
@@ -152,35 +168,56 @@ export default function PropsPage() {
   };
   console.log(!propName , !propImage , !isConnected, isSaving ,mintPrice === undefined)
 
+  const howItWorksContent = [
+    "You can create props that will be stored on the blockchain as NFTs.",
+    "All the comic strips created on this site will use the props you create.",
+    "Each strip is voted on with ETH. If the strip gets enough votes, it is added to the comic and the ETH collected is distributed to the creators of the characters, props and scenes used in the strip.",
+    "If you want to make a lot of money, you want to create props that are popular with the creators of the comic strips!"
+  ];
+
   return (
     <div className="min-h-screen bg-gray-100 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* How Does This Work Section */}
         <div className="mt-4 mb-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-yellow-800 mb-4">How Does This Work?</h2>
-          <ul className="space-y-2 text-yellow-700">
-            <li className="flex items-start">
-              <span className="mr-2">•</span>
-              <span>You can create props that will be stored on the blockchain as NFTs.</span>
-            </li>
-            <li className="flex items-start">
-              <span className="mr-2">•</span>
-              <span>All the comic strips created on this site will use the props you create.</span>
-            </li>
-            <li className="flex items-start">
-              <span className="mr-2">•</span>
-              <span>Each strip is voted on with ETH. If the strip gets enough votes, it is added to the comic and the ETH collected is distributed to the creators of the characters, props and scenes used in the strip.</span>
-            </li>
-            <li className="flex items-start">
-              <span className="mr-2">•</span>
-              <span>If you want to make a lot of money, you want to create props that are popular with the creators of the comic strips! </span>
-            </li>
-            <li className="flex items-start">
-              <span className="mr-2">•</span>
-              <span>But there's a catch. The cost of creating a prop increases with each prop created to keep the universe of props tightly knit. The current <b>cost to create a prop is {mintPrice ? ethers.formatEther(mintPrice) : '0.01'} ETH.</b></span>
-            </li>
-
-          </ul>
+          <button 
+            onClick={toggleHowItWorks}
+            className="w-full flex items-center justify-between text-left"
+          >
+            <h2 className="text-lg font-semibold text-yellow-800">How Does This Work?</h2>
+            <svg 
+              className={`w-5 h-5 transform transition-transform ${isHowItWorksExpanded ? 'rotate-180' : ''}`} 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {isHowItWorksExpanded && (
+            <ul className="mt-4 space-y-2 text-yellow-700">
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>You can create props that will be stored on the blockchain as NFTs.</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>All the comic strips created on this site will use the props you create.</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>Each strip is voted on with ETH. If the strip gets enough votes, it is added to the comic and the ETH collected is distributed to the creators of the characters, props and scenes used in the strip.</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>If you want to make a lot of money, you want to create props that are popular with the creators of the comic strips! </span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>But there's a catch. The cost of creating a prop increases with each prop created to keep the universe of props tightly knit. The current <b>cost to create a prop is {mintPrice ? ethers.formatEther(mintPrice) : '0.01'} ETH.</b></span>
+              </li>
+            </ul>
+          )}
         </div>
 
         {/* Prop Creation Section */}

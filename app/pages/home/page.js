@@ -8,9 +8,25 @@ export default function Feed() {
   const [comics, setComics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isHowItWorksExpanded, setIsHowItWorksExpanded] = useState(true);
   const router = useRouter();
   const { address } = useAccount();
   const { connect, connectors } = useConnect();
+
+  // Load initial state from localStorage
+  useEffect(() => {
+    const savedState = localStorage.getItem('homeHowItWorksExpanded');
+    if (savedState !== null) {
+      setIsHowItWorksExpanded(JSON.parse(savedState));
+    }
+  }, []);
+
+  // Save state to localStorage when it changes
+  const toggleHowItWorks = () => {
+    const newState = !isHowItWorksExpanded;
+    setIsHowItWorksExpanded(newState);
+    localStorage.setItem('homeHowItWorksExpanded', JSON.stringify(newState));
+  };
 
   useEffect(() => {
     const fetchComics = async () => {
@@ -66,33 +82,48 @@ export default function Feed() {
       <div className="px-4 sm:px-6 lg:px-8">
         {/* How Does This Work Section */}
         <div className="mt-4 mb-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-yellow-800 mb-4">How Does This Work?</h2>
-          <ul className="space-y-2 text-yellow-700">
-            <li className="flex items-start">
-              <span className="mr-2">•</span>
-              <span>Every comic is on the blockchain and is free to read. But everything else on this site is paid! Be sure to setup <u><a href="https://coinbase.com/wallet" target="_blank" rel="noopener noreferrer">Coinbase wallet</a></u> and top it up with ETH and connect wallet to this site to participate in creating comics. You don't need to do this, if all you want to do is read!</span>
-            </li>
-            <li className="flex items-start">
-              <span className="mr-2">•</span>
-              <span>Users collaborate to create <u><a href="/pages/characters">Characters</a></u>, <u><a href="/pages/props">Props</a></u> and <u><a href="/pages/scenes">Scenes</a></u>, which can then be used in comic strips.</span>
-            </li>
-            <li className="flex items-start">
-              <span className="mr-2">•</span>
-              <span>Anyone can create a new comic strip in a comic to continue the story, one strip at a time.</span>
-            </li>
-            <li className="flex items-start">
-              <span className="mr-2">•</span>
-              <span>Each strip needs a minimum vote count to be published. The vote count increases with each added strip.</span>
-            </li>
-            <li className="flex items-start">
-              <span className="mr-2">•</span>
-              <span>Winning strips are permanently recorded on the blockchain, and available for anyone to read.</span>
-            </li>
-            <li className="flex items-start">
-              <span className="mr-2">•</span>
-              <span>The person who has contributed more than half of all the votes inside a comic is the owner of the IP of the comic at any time! They can create merch, movies, and monteize the comics in any way they choose.</span>
-            </li>
-          </ul>
+          <button 
+            onClick={toggleHowItWorks}
+            className="w-full flex items-center justify-between text-left"
+          >
+            <h2 className="text-lg font-semibold text-yellow-800">How Does This Work?</h2>
+            <svg 
+              className={`w-5 h-5 transform transition-transform ${isHowItWorksExpanded ? 'rotate-180' : ''}`} 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {isHowItWorksExpanded && (
+            <ul className="mt-4 space-y-2 text-yellow-700">
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>Every comic is on the blockchain and is free to read. But everything else on this site is paid! Be sure to setup <u><a href="https://coinbase.com/wallet" target="_blank" rel="noopener noreferrer">Coinbase wallet</a></u> and top it up with ETH and connect wallet to this site to participate in creating comics. You don't need to do this, if all you want to do is read!</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>Users collaborate to create <u><a href="/pages/characters">Characters</a></u>, <u><a href="/pages/props">Props</a></u> and <u><a href="/pages/scenes">Scenes</a></u>, which can then be used in comic strips.</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>Anyone can create a new comic strip in a comic to continue the story, one strip at a time.</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>Each strip needs a minimum vote count to be published. The vote count increases with each added strip.</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>Winning strips are permanently recorded on the blockchain, and available for anyone to read.</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>The person who has contributed more than half of all the votes inside a comic is the owner of the IP of the comic at any time! They can create merch, movies, and monteize the comics in any way they choose.</span>
+              </li>
+            </ul>
+          )}
         </div>
       </div>
 
@@ -119,8 +150,6 @@ export default function Feed() {
           </button>
         </div>
       </div>
-
-
 
       {/* Grid of Thumbnails */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
