@@ -363,6 +363,8 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
         if (clickedElement === selectedElement) {
           setIsDragging(true);
           setDragStart({ x, y });
+          // Reset resize handle when starting to move
+          setResizeHandle(null);
         }
       } else {
         setSelectedElement(null);
@@ -483,7 +485,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
       setDragStart({ x, y });
       setElements([...elements]);
     } else if (selectedElement.type === 'bubble') {
-      // Only move if we're not resizing
+      // Move the bubble
       const dx = x - dragStart.x;
       const dy = y - dragStart.y;
       
@@ -654,6 +656,8 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
         if (touchedElement === selectedElement) {
           setIsDragging(true);
           setDragStart({ x, y });
+          // Reset resize handle when starting to move
+          setResizeHandle(null);
         }
       } else {
         setSelectedElement(null);
@@ -768,7 +772,7 @@ export default function ComicCanvas({ onSave, initialImage = null }) {
       setDragStart({ x, y });
       setElements([...elements]);
     } else if (selectedElement.type === 'bubble') {
-      // Only move if we're not resizing
+      // Move the bubble
       const dx = x - dragStart.x;
       const dy = y - dragStart.y;
       
