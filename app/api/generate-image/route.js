@@ -12,7 +12,7 @@ const openai = new OpenAI({
 // Function to fetch image and convert to base64
 async function fetchImageAsBuffer(imageUrl) {
   try {
-    const response = await fetch(process.env.BASE_URL + imageUrl);
+    const response = await fetch(process.env.NEXT_PUBLIC_BASE_URL + imageUrl);
     const arrayBuffer = await response.arrayBuffer();
     return Buffer.from(arrayBuffer);
   } catch (error) {

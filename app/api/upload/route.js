@@ -31,7 +31,7 @@ export async function POST(request) {
     console.log('File uploaded successfully:', filepath);
 
     // Return the URL that can be used to access the file
-    const url = `/uploads/${filename}`;
+    const url = `${process.env.NEXT_PUBLIC_BASE_URL}/uploads/${filename}`;
     return NextResponse.json({ url });
   } catch (error) {
     console.error('Error uploading file:', error);
