@@ -265,7 +265,8 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
             style : artisticStyle,
             characters: selectedCharacters.map(c => ({name : c.name, portraitUrl: c.image })),
             props: selectedProps.map(p => ({name : p.name, portraitUrl: p.image })),
-            scene: selectedScenes.length > 0 ? { name: selectedScenes[0].name, imageUrl: selectedScenes[0].image } : null
+            scene: selectedScenes.length > 0 ? { name: selectedScenes[0].name, imageUrl: selectedScenes[0].image } : null,
+            txHash: txHash,
           }
         });
         console.log(response.data);
