@@ -100,7 +100,7 @@ export default function ScenesPage() {
     const value = e.target.value;
     const formattedName = value
       .toLowerCase()
-      .replace(/[^a-z\s]/g, '')
+      .replace(/[^a-z\s\_]/g, '')
       .replace(/\s+/g, '_');
     setSceneName(formattedName);
   };

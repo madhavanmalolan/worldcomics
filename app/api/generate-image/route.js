@@ -31,11 +31,14 @@ async function imageToBase64(buffer) {
 }
 
 export async function POST(request) {
+  console.log("Generating comic panel");
   const requestId = Math.random().toString(36).substring(7);
   
   try {
-    const { prompt, comic, previousPanel, scene, props, txHash } = await request.json();
-    console.log(prompt, comic, previousPanel, scene, props);
+    const json = await request.json();
+    console.log(json);
+    const { prompt, comic, previousPanel, scene, props, txHash } = json;
+    console.log(prompt, comic, previousPanel, scene, props, txHash);
     
     if (!comic  || !comic.style || !comic.characters || !prompt) {
       return NextResponse.json(

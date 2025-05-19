@@ -256,7 +256,7 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
         console.log(generatedImage);
         console.log(generatedText);
       }else {
-        console.log("Generating comic image");
+        console.log("Generating comic image", txHash);
         console.log(selectedScenes);
         const response = await imageGenApi.post('/api/generate-image', {
           prompt,
@@ -266,8 +266,8 @@ export default function ImageGenerator({ onImageSelected, currentImage, artistic
             characters: selectedCharacters.map(c => ({name : c.name, portraitUrl: c.image })),
             props: selectedProps.map(p => ({name : p.name, portraitUrl: p.image })),
             scene: selectedScenes.length > 0 ? { name: selectedScenes[0].name, imageUrl: selectedScenes[0].image } : null,
-            txHash: txHash,
-          }
+          },
+          txHash: txHash,
         });
         console.log(response.data);
         generatedImage = response.data.image;
